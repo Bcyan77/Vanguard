@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Vanguard - Destiny 2 Party Recruitment{% endblock %}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        /* Messages */
+        .messages {
+            margin: 1rem 0;
+        }
+
+        .message {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid;
+        }
+
+        .message.success {
+            border-color: #4caf50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .message.error {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.1);
+        }
+
+        .message.info {
+            border-color: #2196f3;
+            background: rgba(33, 150, 243, 0.1);
+        }
+
+        /* Main content */
+        main {
+            padding: 2rem 0;
+            min-height: calc(100vh - 200px);
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem 0;
+            text-align: center;
+            color: #888;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #b0b0b0;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-size: 1rem;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Sidebar */
+        .main-layout {
+            display: flex;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        .content-area {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .sidebar {
+            width: 320px;
+            position: sticky;
+            top: 80px;
+            max-height: calc(100vh - 100px);
+            overflow-y: auto;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 3px;
+        }
+
+        .sidebar-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sidebar-party {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .sidebar-party:hover {
+            border-color: rgba(102, 126, 234, 0.5);
+            transform: translateX(4px);
+        }
+
+        .sidebar-party:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-party-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #fff;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar-party-meta {
+            font-size: 0.75rem;
+            color: #888;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .sidebar-empty {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .sidebar-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            background: rgba(102, 126, 234, 0.2);
+            border-radius: 12px;
+            font-size: 0.625rem;
+            color: #667eea;
+            margin-left: 0.5rem;
+        }
+
+        .sidebar-badge.pending {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ff9800;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav>
+        <div class="container">
+            <a href="{% url 'home' %}" class="logo">⚡ VANGUARD</a>
+            <ul>
+                {% if user.is_authenticated %}
+                <li><a href="{% url 'parties:party_list' %}">Parties</a></li>
+                <li><a href="{% url 'parties:party_create' %}">Create Party</a></li>
+                <li><a href="{% url 'accounts:profile' %}">{{ user.display_name }}</a></li>
+                <li><a href="{% url 'accounts:logout' %}" class="btn btn-secondary">Logout</a></li>
+                {% else %}
+                <li><a href="{% url 'accounts:login' %}" class="btn">Login with Bungie</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="main-layout">
+                <div class="content-area">
+                    {% block content %}{% endblock %}
+                </div>
+
+                {% if user.is_authenticated %}
+                <aside class="sidebar">
+                    {% if sidebar_created_parties %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">
+                            ⚔️ My Parties
+                            <span class="sidebar-badge">{{ sidebar_created_parties.count }}</span>
+                        </div>
+                        {% for party in sidebar_created_parties %}
+                        <div class="sidebar-party"
+                            onclick="window.location.href='{% url 'parties:party_detail' party.pk %}'">
+                            <div class="sidebar-party-title">{{ party.title }}</div>
+                            <div class="sidebar-party-meta">
+                                <span>👥 {{ party.current_members }}/{{ party.max_members }}</span>
+                                <span>{{ party.get_status_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if sidebar_memberships %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">
+                            🎮 Joined Parties
+                            <span class="sidebar-badge">{{ sidebar_memberships.count }}</span>
+                        </div>
+                        {% for membership in sidebar_memberships %}
+                        <div class="sidebar-party"
+                            onclick="window.location.href='{% url 'parties:party_detail' membership.party.pk %}'">
+                            <div class="sidebar-party-title">{{ membership.party.title }}</div>
+                            <div class="sidebar-party-meta">
+                                <span>{{ membership.party.get_activity_type_display }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if sidebar_pending_applications %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-title">
+                            ⏳ Pending
+                            <span class="sidebar-badge pending">{{ sidebar_pending_applications.count }}</span>
+                        </div>
+                        {% for application in sidebar_pending_applications %}
+                        <div class="sidebar-party"
+                            onclick="window.location.href='{% url 'parties:party_detail' application.party.pk %}'">
+                            <div class="sidebar-party-title">{{ application.party.title }}</div>
+                            <div class="sidebar-party-meta">
+                                <span>{{ application.applied_at|timesince }} ago</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    {% if not sidebar_created_parties and not sidebar_memberships and not sidebar_pending_applications
+                    %}
+                    <div class="sidebar-section">
+                        <div class="sidebar-empty">
+                            <p style="margin-bottom: 0.5rem;">No active parties yet</p>
+                            <a href="{% url 'parties:party_create' %}" class="btn"
+                                style="font-size: 0.875rem; padding: 0.5rem 1rem;">Create Party</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </aside>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 Vanguard - Destiny 2 Party Recruitment</p>
+            <p>Not affiliated with Bungie or Destiny. Built using Bungie.net API.</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

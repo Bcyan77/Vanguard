@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - BUNGIE_API_KEY=${BUNGIE_API_KEY}
+      - BUNGIE_CLIENT_ID=${BUNGIE_CLIENT_ID}
+      - BUNGIE_CLIENT_SECRET=${BUNGIE_CLIENT_SECRET}
+      - NGROK_URL=${NGROK_URL}
+    env_file:
+      - .env
+    stdin_open: true
+    tty: true

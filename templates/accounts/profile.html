@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user.display_name }} - Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+
+    .profile-info h1 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .profile-meta {
+        color: #888;
+        font-size: 0.875rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #888;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #fff;
+    }
+
+    .party-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .party-item {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .party-item:hover {
+        transform: translateX(4px);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .party-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.5rem;
+    }
+
+    .party-item-title {
+        font-size: 1.125rem;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .party-item-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .empty-message {
+        text-align: center;
+        padding: 2rem;
+        color: #888;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="profile-avatar">
+        👤
+    </div>
+    <div class="profile-info">
+        <h1>{{ user.display_name }}</h1>
+        <div class="profile-meta">
+            {% if user.bungie_global_display_name %}
+            <p>Bungie Name: {{ user.bungie_global_display_name }}#{{ user.bungie_global_display_name_code }}</p>
+            {% endif %}
+            <p>Member since {{ user.date_joined|date:"F Y" }}</p>
+        </div>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ created_parties.count }}</div>
+        <div class="stat-label">Parties Created</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ memberships.count }}</div>
+        <div class="stat-label">Active Memberships</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ pending_applications.count }}</div>
+        <div class="stat-label">Pending Applications</div>
+    </div>
+</div>
+
+<h2 class="section-title">🎮 Your Parties</h2>
+{% if created_parties %}
+<div class="party-list">
+    {% for party in created_parties %}
+    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' party.pk %}'">
+        <div class="party-item-header">
+            <div class="party-item-title">{{ party.title }}</div>
+            <span class="party-status status-{{ party.status }}">{{ party.get_status_display }}</span>
+        </div>
+        <div class="party-item-meta">
+            <span>{{ party.get_activity_type_display }}</span>
+            <span>👥 {{ party.current_members }}/{{ party.max_members }}</span>
+            <span>Created {{ party.created_at|timesince }} ago</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-message">
+    <p>You haven't created any parties yet.</p>
+    <a href="{% url 'parties:party_create' %}" class="btn" style="margin-top: 1rem;">Create Your First Party</a>
+</div>
+{% endif %}
+
+<h2 class="section-title" style="margin-top: 2rem;">👥 Active Memberships</h2>
+{% if memberships %}
+<div class="party-list">
+    {% for membership in memberships %}
+    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' membership.party.pk %}'">
+        <div class="party-item-header">
+            <div class="party-item-title">{{ membership.party.title }}</div>
+            <span class="tag">{{ membership.get_role_display }}</span>
+        </div>
+        <div class="party-item-meta">
+            <span>{{ membership.party.get_activity_type_display }}</span>
+            <span>Created by {{ membership.party.creator.display_name }}</span>
+            <span>Joined {{ membership.joined_at|timesince }} ago</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-message">
+    <p>You're not a member of any parties.</p>
+    <a href="{% url 'parties:party_list' %}" class="btn" style="margin-top: 1rem;">Browse Parties</a>
+</div>
+{% endif %}
+
+{% if pending_applications %}
+<h2 class="section-title" style="margin-top: 2rem;">⏳ Pending Applications</h2>
+<div class="party-list">
+    {% for application in pending_applications %}
+    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' application.party.pk %}'">
+        <div class="party-item-header">
+            <div class="party-item-title">{{ application.party.title }}</div>
+            <span class="tag">Pending</span>
+        </div>
+        <div class="party-item-meta">
+            <span>{{ application.party.get_activity_type_display }}</span>
+            <span>Applied {{ application.applied_at|timesince }} ago</span>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
