@@ -21,7 +21,7 @@
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0 20px;
         }
@@ -192,123 +192,6 @@
             resize: vertical;
             min-height: 100px;
         }
-
-        /* Sidebar */
-        .main-layout {
-            display: flex;
-            gap: 2rem;
-            align-items: start;
-        }
-
-        .content-area {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .sidebar {
-            width: 320px;
-            position: sticky;
-            top: 80px;
-            max-height: calc(100vh - 100px);
-            overflow-y: auto;
-        }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.5);
-            border-radius: 3px;
-        }
-
-        .sidebar-section {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .sidebar-party {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            padding: 0.75rem;
-            margin-bottom: 0.75rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .sidebar-party:hover {
-            border-color: rgba(102, 126, 234, 0.5);
-            transform: translateX(4px);
-        }
-
-        .sidebar-party:last-child {
-            margin-bottom: 0;
-        }
-
-        .sidebar-party-title {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #fff;
-            margin-bottom: 0.25rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .sidebar-party-meta {
-            font-size: 0.75rem;
-            color: #888;
-            display: flex;
-            gap: 0.75rem;
-        }
-
-        .sidebar-empty {
-            text-align: center;
-            padding: 1rem;
-            color: #666;
-            font-size: 0.875rem;
-        }
-
-        .sidebar-badge {
-            display: inline-block;
-            padding: 0.125rem 0.5rem;
-            background: rgba(102, 126, 234, 0.2);
-            border-radius: 12px;
-            font-size: 0.625rem;
-            color: #667eea;
-            margin-left: 0.5rem;
-        }
-
-        .sidebar-badge.pending {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ff9800;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .sidebar {
-                display: none;
-            }
-        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -342,81 +225,7 @@
             </div>
             {% endif %}
 
-            <div class="main-layout">
-                <div class="content-area">
-                    {% block content %}{% endblock %}
-                </div>
-
-                {% if user.is_authenticated %}
-                <aside class="sidebar">
-                    {% if sidebar_created_parties %}
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">
-                            ⚔️ My Parties
-                            <span class="sidebar-badge">{{ sidebar_created_parties.count }}</span>
-                        </div>
-                        {% for party in sidebar_created_parties %}
-                        <div class="sidebar-party"
-                            onclick="window.location.href='{% url 'parties:party_detail' party.pk %}'">
-                            <div class="sidebar-party-title">{{ party.title }}</div>
-                            <div class="sidebar-party-meta">
-                                <span>👥 {{ party.current_members }}/{{ party.max_members }}</span>
-                                <span>{{ party.get_status_display }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if sidebar_memberships %}
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">
-                            🎮 Joined Parties
-                            <span class="sidebar-badge">{{ sidebar_memberships.count }}</span>
-                        </div>
-                        {% for membership in sidebar_memberships %}
-                        <div class="sidebar-party"
-                            onclick="window.location.href='{% url 'parties:party_detail' membership.party.pk %}'">
-                            <div class="sidebar-party-title">{{ membership.party.title }}</div>
-                            <div class="sidebar-party-meta">
-                                <span>{{ membership.party.get_activity_type_display }}</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if sidebar_pending_applications %}
-                    <div class="sidebar-section">
-                        <div class="sidebar-title">
-                            ⏳ Pending
-                            <span class="sidebar-badge pending">{{ sidebar_pending_applications.count }}</span>
-                        </div>
-                        {% for application in sidebar_pending_applications %}
-                        <div class="sidebar-party"
-                            onclick="window.location.href='{% url 'parties:party_detail' application.party.pk %}'">
-                            <div class="sidebar-party-title">{{ application.party.title }}</div>
-                            <div class="sidebar-party-meta">
-                                <span>{{ application.applied_at|timesince }} ago</span>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    {% if not sidebar_created_parties and not sidebar_memberships and not sidebar_pending_applications
-                    %}
-                    <div class="sidebar-section">
-                        <div class="sidebar-empty">
-                            <p style="margin-bottom: 0.5rem;">No active parties yet</p>
-                            <a href="{% url 'parties:party_create' %}" class="btn"
-                                style="font-size: 0.875rem; padding: 0.5rem 1rem;">Create Party</a>
-                        </div>
-                    </div>
-                    {% endif %}
-                </aside>
-                {% endif %}
-            </div>
+            {% block content %}{% endblock %}
         </div>
     </main>
 
