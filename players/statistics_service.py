@@ -37,7 +37,7 @@ def class_light_level_anova() -> dict:
     """
     if not SCIPY_AVAILABLE:
         return {
-            'error': 'scipy가 설치되지 않았습니다.',
+            'error': 'scipy is not installed.',
             'test_name': 'One-way ANOVA',
             'available': False,
         }
@@ -65,7 +65,7 @@ def class_light_level_anova() -> dict:
     # 데이터 유효성 검사
     if len(titan_levels) < 2 or len(hunter_levels) < 2 or len(warlock_levels) < 2:
         return {
-            'error': '각 클래스에 최소 2개 이상의 데이터가 필요합니다.',
+            'error': 'At least 2 data points are required per class.',
             'test_name': 'One-way ANOVA',
             'available': False,
             'groups': {
@@ -123,11 +123,11 @@ def class_light_level_anova() -> dict:
         'result': {
             'significant': significant,
             'interpretation': (
-                '클래스별 빛 레벨에 통계적으로 유의한 차이가 있습니다.'
+                'There is a statistically significant difference in light level between classes.'
                 if significant else
-                '클래스별 빛 레벨에 통계적으로 유의한 차이가 없습니다.'
+                'There is no statistically significant difference in light level between classes.'
             ),
-            'conclusion': 'H0 기각' if significant else 'H0 채택',
+            'conclusion': 'Reject H0' if significant else 'Fail to reject H0',
         },
         'available': True,
         'generated_at': timezone.now().isoformat(),
@@ -147,7 +147,7 @@ def light_triumph_correlation() -> dict:
     """
     if not SCIPY_AVAILABLE:
         return {
-            'error': 'scipy가 설치되지 않았습니다.',
+            'error': 'scipy is not installed.',
             'test_name': 'Pearson Correlation',
             'available': False,
         }
@@ -169,7 +169,7 @@ def light_triumph_correlation() -> dict:
     # 데이터 유효성 검사
     if len(light_levels) < 3:
         return {
-            'error': '상관관계 분석을 위해 최소 3개 이상의 데이터가 필요합니다.',
+            'error': 'At least 3 data points are required for correlation analysis.',
             'test_name': 'Pearson Correlation',
             'available': False,
             'sample_size': len(light_levels),
@@ -236,18 +236,18 @@ def light_triumph_correlation() -> dict:
         },
         'result': {
             'significant': significant,
-            'strength': strength,
+            'strength': strength_en,
             'strength_en': strength_en,
-            'direction': direction,
+            'direction': direction_en,
             'direction_en': direction_en,
             'interpretation': (
-                f'빛 레벨과 승리 점수 사이에 통계적으로 유의한 {strength} {direction}이 있습니다. '
-                f'(r = {r:.3f}, p = {p_value:.4f})'
+                f'There is a statistically significant {strength_en} {direction_en} correlation '
+                f'between light level and triumph score. (r = {r:.3f}, p = {p_value:.4f})'
                 if significant else
-                f'빛 레벨과 승리 점수 사이에 통계적으로 유의한 상관관계가 없습니다. '
+                f'There is no statistically significant correlation between light level and triumph score. '
                 f'(r = {r:.3f}, p = {p_value:.4f})'
             ),
-            'conclusion': 'H0 기각' if significant else 'H0 채택',
+            'conclusion': 'Reject H0' if significant else 'Fail to reject H0',
         },
         # 시각화용 데이터 (산점도)
         'scatter_data': {
