@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Edit {{ party.title }} - Vanguard{% endblock %}
 
@@ -80,43 +81,58 @@
                 <textarea id="description" name="description" required>{{ party.description }}</textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="activity_type">Activity Type *</label>
-                    <select id="activity_type" name="activity_type" required>
-                        {% for value, label in activity_types %}
-                        <option value="{{ value }}" {% if party.activity_type==value %}selected{% endif %}>{{ label }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <!-- 3-Tier Activity Selection -->
+            <div class="form-group">
+                <label for="activity_type">Activity Type (대분류) *</label>
+                <select id="activity_type" name="activity_type" required>
+                    <option value="">Select Activity Type</option>
+                    {% for activity_type in activity_types %}
+                    <option value="{{ activity_type.hash }}" {% if party.selected_activity_type.hash == activity_type.hash %}selected{% endif %}>{{ activity_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
+            <div class="form-group">
+                <label for="specific_activity">Specific Activity (소분류) *</label>
+                <select id="specific_activity" name="specific_activity" required disabled>
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="activity_mode">Difficulty / Mode (난이도, Optional)</label>
+                <select id="activity_mode" name="activity_mode" disabled>
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label for="max_members">Max Members *</label>
                     <input type="number" id="max_members" name="max_members" value="{{ party.max_members }}"
                         min="{{ party.current_members }}" max="12" required>
                     <small style="color: #888;">Current members: {{ party.current_members }}</small>
                 </div>
-            </div>
 
-            <div class="form-row">
                 <div class="form-group">
                     <label for="min_power_level">Minimum Power Level</label>
                     <input type="number" id="min_power_level" name="min_power_level"
                         value="{{ party.min_power_level|default:'' }}">
                 </div>
+            </div>
 
+            <div class="form-row">
                 <div class="form-group">
                     <label for="scheduled_time">Scheduled Time</label>
                     <input type="datetime-local" id="scheduled_time" name="scheduled_time"
                         value="{% if party.scheduled_time %}{{ party.scheduled_time|date:'Y-m-d\TH:i' }}{% endif %}">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="tags">Tags (comma-separated)</label>
-                <input type="text" id="tags" name="tags"
-                    value="{% for tag in party.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                <div class="form-group">
+                    <label for="tags">Tags (comma-separated)</label>
+                    <input type="text" id="tags" name="tags"
+                        value="{% for tag in party.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                </div>
             </div>
 
             <div class="form-group">
@@ -134,4 +150,21 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/cascading-activity-selector.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new CascadingActivitySelector({
+            typeSelectId: 'activity_type',
+            activitySelectId: 'specific_activity',
+            modeSelectId: 'activity_mode',
+            // Pass initial values for edit mode
+            initialTypeHash: '{{ party.selected_activity_type.hash|default:"" }}',
+            initialActivityHash: '{{ party.selected_specific_activity.hash|default:"" }}',
+            initialModeHash: '{{ party.selected_activity_mode.hash|default:"" }}'
+        });
+    });
+</script>
 {% endblock %}

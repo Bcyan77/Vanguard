@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Create Party - Vanguard{% endblock %}
 
@@ -81,38 +82,53 @@
                     placeholder="Describe your party, requirements, and what you're looking for..."></textarea>
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="activity_type">Activity Type *</label>
-                    <select id="activity_type" name="activity_type" required>
-                        <option value="">Select Activity</option>
-                        {% for value, label in activity_types %}
-                        <option value="{{ value }}">{{ label }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <!-- 3-Tier Activity Selection -->
+            <div class="form-group">
+                <label for="activity_type">Activity Type (대분류) *</label>
+                <select id="activity_type" name="activity_type" required>
+                    <option value="">Select Activity Type</option>
+                    {% for activity_type in activity_types %}
+                    <option value="{{ activity_type.hash }}">{{ activity_type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
+            <div class="form-group">
+                <label for="specific_activity">Specific Activity (소분류) *</label>
+                <select id="specific_activity" name="specific_activity" required disabled>
+                    <option value="">Select Type First</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="activity_mode">Difficulty / Mode (난이도, Optional)</label>
+                <select id="activity_mode" name="activity_mode" disabled>
+                    <option value="">Select Activity First</option>
+                </select>
+            </div>
+
+            <div class="form-row">
                 <div class="form-group">
                     <label for="max_members">Max Members *</label>
                     <input type="number" id="max_members" name="max_members" value="6" min="2" max="12" required>
                 </div>
-            </div>
 
-            <div class="form-row">
                 <div class="form-group">
                     <label for="min_power_level">Minimum Power Level</label>
                     <input type="number" id="min_power_level" name="min_power_level" placeholder="e.g., 1800">
                 </div>
+            </div>
 
+            <div class="form-row">
                 <div class="form-group">
                     <label for="scheduled_time">Scheduled Time</label>
                     <input type="datetime-local" id="scheduled_time" name="scheduled_time">
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="tags">Tags (comma-separated)</label>
-                <input type="text" id="tags" name="tags" placeholder="e.g., chill, experienced, sherpa">
+                <div class="form-group">
+                    <label for="tags">Tags (comma-separated)</label>
+                    <input type="text" id="tags" name="tags" placeholder="e.g., chill, experienced, sherpa">
+                </div>
             </div>
 
             <div class="form-group">
@@ -129,4 +145,17 @@
         </form>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/cascading-activity-selector.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        new CascadingActivitySelector({
+            typeSelectId: 'activity_type',
+            activitySelectId: 'specific_activity',
+            modeSelectId: 'activity_mode'
+        });
+    });
+</script>
 {% endblock %}

@@ -50,3 +50,7 @@ Thumbs.db
 # Ngrok
 ngrok.exe
 ngrok
+
+# AI
+CLAUDE.md
+.claude

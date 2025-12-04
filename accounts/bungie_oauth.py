@@ -270,3 +270,43 @@ def make_bungie_api_request(endpoint, access_token, method='GET', data=None):
     except requests.exceptions.RequestException as e:
         logger.error(f"API request failed: {e}")
         return None
+
+
+def get_manifest_api_request(endpoint, method='GET'):
+    """
+    Make Bungie API requests that don't require OAuth (manifest endpoints)
+
+    Args:
+        endpoint: API endpoint (e.g., '/Destiny2/Manifest/')
+        method: HTTP method (GET, POST, etc.)
+
+    Returns:
+        dict: API response
+        None: If request fails
+    """
+    url = f"{settings.BUNGIE_API_BASE_URL}{endpoint}"
+
+    headers = {
+        'X-API-Key': settings.BUNGIE_API_KEY,
+    }
+
+    try:
+        if method == 'GET':
+            response = requests.get(url, headers=headers, timeout=30)
+        else:
+            logger.error(f"Unsupported HTTP method: {method}")
+            return None
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        if data.get('ErrorCode') == 1:
+            return data.get('Response')
+        else:
+            logger.error(f"Bungie API error: {data.get('Message', 'Unknown error')}")
+            return None
+
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Manifest API request failed: {e}")
+        return None

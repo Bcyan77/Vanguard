@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Parties - Vanguard{% endblock %}
 
@@ -33,10 +32,6 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
         margin-bottom: 1rem;
-    }
-
-    .filter-row:last-child {
-        margin-bottom: 0;
     }
 
     .party-grid {
@@ -209,32 +204,20 @@
                 <input type="text" name="search" placeholder="Search parties..." value="{{ search_query|default:'' }}">
             </div>
             
+            <select name="activity_type">
+                <option value="">All Activities</option>
+                {% for value, label in activity_types %}
+                    <option value="{{ value }}" {% if selected_activity == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            
             <select name="status">
                 <option value="">All Status</option>
                 <option value="open" {% if selected_status == 'open' %}selected{% endif %}>Open</option>
                 <option value="full" {% if selected_status == 'full' %}selected{% endif %}>Full</option>
                 <option value="closed" {% if selected_status == 'closed' %}selected{% endif %}>Closed</option>
             </select>
-        </div>
-
-        <div class="filter-row">
-            <select id="filter_activity_type" name="activity_type">
-                <option value="">All Activity Types</option>
-                {% for activity_type in activity_types %}
-                    <option value="{{ activity_type.hash }}" {% if selected_activity_type == activity_type.hash|stringformat:"s" %}selected{% endif %}>{{ activity_type.name }}</option>
-                {% endfor %}
-            </select>
-
-            <select id="filter_specific_activity" name="specific_activity" {% if not selected_activity_type %}disabled{% endif %}>
-                <option value="">All Specific Activities</option>
-            </select>
-
-            <select id="filter_activity_mode" name="activity_mode" {% if not selected_specific_activity %}disabled{% endif %}>
-                <option value="">All Modes</option>
-            </select>
-        </div>
-
-        <div class="filter-row">
+            
             <button type="submit" class="btn">Apply Filters</button>
         </div>
     </form>
@@ -246,7 +229,7 @@
             <div class="party-card" onclick="window.location.href='{% url 'parties:party_detail' party.pk %}'">
                 <div class="party-header">
                     <div>
-                        <div class="party-activity">{{ party.get_activity_display }}</div>
+                        <div class="party-activity">{{ party.get_activity_type_display }}</div>
                         <h3 class="party-title">{{ party.title }}</h3>
                     </div>
                     <span class="party-status status-{{ party.status }}">
@@ -311,20 +294,4 @@
         {% endif %}
     </div>
 {% endif %}
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/cascading-activity-selector.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        new CascadingActivitySelector({
-            typeSelectId: 'filter_activity_type',
-            activitySelectId: 'filter_specific_activity',
-            modeSelectId: 'filter_activity_mode',
-            initialTypeHash: '{{ selected_activity_type|default:"" }}',
-            initialActivityHash: '{{ selected_specific_activity|default:"" }}',
-            initialModeHash: '{{ selected_activity_mode|default:"" }}'
-        });
-    });
-</script>
 {% endblock %}
