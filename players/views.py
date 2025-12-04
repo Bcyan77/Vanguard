@@ -13,6 +13,7 @@ from .bungie_api import (
     get_class_name,
     get_platform_info,
 )
+from .services import sync_player_from_api
 
 
 @login_required
@@ -68,6 +69,9 @@ def player_detail(request, membership_type, membership_id):
     if not profile:
         messages.error(request, 'Failed to load player profile. The profile may be private or unavailable.')
         return redirect('players:search')
+
+    # Sync player data to database
+    sync_player_from_api(membership_type, membership_id, profile)
 
     # Extract profile info
     profile_data = profile.get('profile', {}).get('data', {})

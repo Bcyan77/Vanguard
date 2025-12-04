@@ -141,9 +141,6 @@ def search_by_prefix(prefix, page=0):
         tuple: (list of results, error message or None)
     """
     try:
-        if len(prefix) < 3:
-            return [], 'Search term must be at least 3 characters'
-
         data = {
             'displayNamePrefix': prefix
         }

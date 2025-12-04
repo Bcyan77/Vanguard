@@ -38,17 +38,7 @@
     }
 
     .search-input-wrapper input {
-        padding-left: 3rem;
         font-size: 1.1rem;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #888;
-        font-size: 1.25rem;
     }
 
     .search-hint {
@@ -184,7 +174,6 @@
 <div class="search-container">
     <form method="get" class="search-form">
         <div class="search-input-wrapper">
-            <span class="search-icon">🔍</span>
             <input type="text" name="q" value="{{ query }}"
                    placeholder="Enter Bungie Name or partial name..."
                    autocomplete="off" autofocus>
@@ -192,7 +181,7 @@
         <button type="submit" class="btn">Search</button>
     </form>
     <p class="search-hint">
-        Exact search: <code>Guardian#1234</code> | Prefix search: <code>Guardian</code> (min 3 characters)
+        Exact search: <code>Guardian#1234</code> | Prefix search: <code>Guardian</code>
     </p>
 </div>
 
