@@ -1,10 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.utils import timezone
 
-from .models import DestinyPlayer
+from .models import DestinyPlayer, GlobalStatisticsCache
 from .serializers import (
     DestinyPlayerListSerializer, DestinyPlayerDetailSerializer,
     PlayerSearchResultSerializer
@@ -18,7 +19,13 @@ from .bungie_api import (
     get_platform_info,
     get_activity_name,
 )
-from .services import sync_player_from_api
+from .services import sync_player_from_api, refresh_global_statistics
+from .statistics_service import (
+    class_light_level_anova,
+    light_triumph_correlation,
+    get_class_boxplot_data,
+    get_all_hypothesis_tests,
+)
 from fireteams.serializers import ErrorResponseSerializer
 
 
@@ -180,4 +187,185 @@ class PlayerDetailAPIView(APIView):
             'recentActivities': recent_activities,
             # Database cached data
             'cachedPlayer': DestinyPlayerDetailSerializer(db_player).data if db_player else None
+        })
+
+
+class StatisticsDescriptiveAPIView(APIView):
+    """
+    기술 통계 API - 전체 공개 (인증 불필요)
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get descriptive statistics",
+        description="Get descriptive statistics for player data including mean, median, quartiles, skewness, and kurtosis.",
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        # 캐시된 통계 가져오기 또는 새로 계산
+        try:
+            cache = GlobalStatisticsCache.objects.get(pk=1)
+            # 1시간 이상 지났으면 갱신
+            if (timezone.now() - cache.last_updated).total_seconds() > 3600:
+                cache = refresh_global_statistics()
+        except GlobalStatisticsCache.DoesNotExist:
+            cache = refresh_global_statistics()
+
+        return Response({
+            'metadata': {
+                'generated_at': cache.last_updated.isoformat(),
+                'total_players': cache.total_players,
+                'total_characters': cache.total_characters,
+            },
+            'light_level': {
+                'mean': round(cache.avg_light_level, 2) if cache.avg_light_level else None,
+                'std': round(cache.stddev_light_level, 2) if cache.stddev_light_level else None,
+                'median': cache.median_light_level,
+                'q1': cache.q1_light_level,
+                'q3': cache.q3_light_level,
+                'min': cache.min_light_level,
+                'max': cache.max_light_level,
+                'skewness': round(cache.skewness_light_level, 4) if cache.skewness_light_level else None,
+                'kurtosis': round(cache.kurtosis_light_level, 4) if cache.kurtosis_light_level else None,
+            },
+            'triumph_score': {
+                'mean': round(cache.avg_triumph_score, 2) if cache.avg_triumph_score else None,
+                'std': round(cache.stddev_triumph_score, 2) if cache.stddev_triumph_score else None,
+                'median': cache.median_triumph_score,
+                'q1': cache.q1_triumph_score,
+                'q3': cache.q3_triumph_score,
+                'min': cache.min_triumph_score,
+                'max': cache.max_triumph_score,
+                'skewness': round(cache.skewness_triumph_score, 4) if cache.skewness_triumph_score else None,
+                'kurtosis': round(cache.kurtosis_triumph_score, 4) if cache.kurtosis_triumph_score else None,
+            },
+            'play_time_hours': {
+                'mean': round(cache.avg_play_time_hours, 2) if cache.avg_play_time_hours else None,
+                'std': round(cache.stddev_play_time_hours, 2) if cache.stddev_play_time_hours else None,
+                'median': round(cache.median_play_time_hours, 2) if cache.median_play_time_hours else None,
+                'q1': round(cache.q1_play_time_hours, 2) if cache.q1_play_time_hours else None,
+                'q3': round(cache.q3_play_time_hours, 2) if cache.q3_play_time_hours else None,
+                'skewness': round(cache.skewness_play_time_hours, 4) if cache.skewness_play_time_hours else None,
+                'kurtosis': round(cache.kurtosis_play_time_hours, 4) if cache.kurtosis_play_time_hours else None,
+            },
+            'class_distribution': {
+                'titan': cache.titan_count,
+                'hunter': cache.hunter_count,
+                'warlock': cache.warlock_count,
+            },
+        })
+
+
+class StatisticsClassComparisonAPIView(APIView):
+    """
+    클래스별 비교 통계 API - 전체 공개 (인증 불필요)
+    ANOVA 검정 결과 포함
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get class comparison statistics",
+        description="Get class-wise statistics and ANOVA test results for light level comparison.",
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        # 캐시된 클래스 통계
+        try:
+            cache = GlobalStatisticsCache.objects.get(pk=1)
+            class_stats = cache.class_statistics or {}
+        except GlobalStatisticsCache.DoesNotExist:
+            cache = refresh_global_statistics()
+            class_stats = cache.class_statistics or {}
+
+        # ANOVA 검정 수행
+        anova_result = class_light_level_anova()
+
+        # 박스플롯 데이터
+        boxplot_data = get_class_boxplot_data()
+
+        return Response({
+            'metadata': {
+                'generated_at': timezone.now().isoformat(),
+            },
+            'class_statistics': class_stats,
+            'hypothesis_test': anova_result,
+            'visualization_data': boxplot_data,
+        })
+
+
+class StatisticsCorrelationAPIView(APIView):
+    """
+    상관관계 분석 API - 전체 공개 (인증 불필요)
+    빛 레벨과 승리 점수 간 Pearson 상관관계
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get correlation analysis",
+        description="Get Pearson correlation analysis between light level and triumph score.",
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        correlation_result = light_triumph_correlation()
+
+        return Response({
+            'metadata': {
+                'generated_at': timezone.now().isoformat(),
+            },
+            'correlation_analysis': correlation_result,
+        })
+
+
+class StatisticsDistributionAPIView(APIView):
+    """
+    분포 데이터 API - 전체 공개 (인증 불필요)
+    시각화용 히스토그램 데이터
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get distribution data",
+        description="Get distribution data for visualization (histograms).",
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        try:
+            cache = GlobalStatisticsCache.objects.get(pk=1)
+        except GlobalStatisticsCache.DoesNotExist:
+            cache = refresh_global_statistics()
+
+        return Response({
+            'metadata': {
+                'generated_at': cache.last_updated.isoformat(),
+            },
+            'light_level_distribution': cache.light_level_distribution,
+            'triumph_score_distribution': cache.triumph_score_distribution,
+            'play_time_distribution': cache.play_time_distribution,
+        })
+
+
+class StatisticsHypothesisTestsAPIView(APIView):
+    """
+    전체 가설 검정 결과 API - 전체 공개 (인증 불필요)
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get all hypothesis test results",
+        description="Get all hypothesis test results including ANOVA and correlation analysis.",
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        all_tests = get_all_hypothesis_tests()
+
+        return Response({
+            'metadata': {
+                'generated_at': timezone.now().isoformat(),
+            },
+            'tests': all_tests,
         })

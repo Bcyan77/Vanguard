@@ -163,11 +163,25 @@ class GlobalStatisticsCache(models.Model):
     # Light Level Statistics
     avg_light_level = models.FloatField(default=0)
     stddev_light_level = models.FloatField(default=0)
+    median_light_level = models.FloatField(null=True, blank=True)
+    q1_light_level = models.FloatField(null=True, blank=True)
+    q3_light_level = models.FloatField(null=True, blank=True)
+    min_light_level = models.IntegerField(null=True, blank=True)
+    max_light_level = models.IntegerField(null=True, blank=True)
+    skewness_light_level = models.FloatField(null=True, blank=True)
+    kurtosis_light_level = models.FloatField(null=True, blank=True)
     light_level_distribution = models.JSONField(default=dict)
 
     # Triumph Score Statistics
     avg_triumph_score = models.FloatField(default=0)
     stddev_triumph_score = models.FloatField(default=0)
+    median_triumph_score = models.FloatField(null=True, blank=True)
+    q1_triumph_score = models.FloatField(null=True, blank=True)
+    q3_triumph_score = models.FloatField(null=True, blank=True)
+    min_triumph_score = models.IntegerField(null=True, blank=True)
+    max_triumph_score = models.IntegerField(null=True, blank=True)
+    skewness_triumph_score = models.FloatField(null=True, blank=True)
+    kurtosis_triumph_score = models.FloatField(null=True, blank=True)
     triumph_score_distribution = models.JSONField(default=dict)
 
     # Class Distribution
@@ -175,9 +189,17 @@ class GlobalStatisticsCache(models.Model):
     hunter_count = models.IntegerField(default=0)
     warlock_count = models.IntegerField(default=0)
 
+    # Class-wise Statistics (JSON: {"titan": {...}, "hunter": {...}, "warlock": {...}})
+    class_statistics = models.JSONField(default=dict)
+
     # Play Time Statistics (hours)
     avg_play_time_hours = models.FloatField(default=0)
     stddev_play_time_hours = models.FloatField(default=0)
+    median_play_time_hours = models.FloatField(null=True, blank=True)
+    q1_play_time_hours = models.FloatField(null=True, blank=True)
+    q3_play_time_hours = models.FloatField(null=True, blank=True)
+    skewness_play_time_hours = models.FloatField(null=True, blank=True)
+    kurtosis_play_time_hours = models.FloatField(null=True, blank=True)
     play_time_distribution = models.JSONField(default=dict)
 
     # Metadata

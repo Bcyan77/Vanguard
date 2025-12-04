@@ -385,6 +385,139 @@
         color: #fff;
     }
 
+    /* Statistical Analysis Section */
+    .analysis-section {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .analysis-section h2 {
+        font-size: 1.5rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .analysis-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+        .analysis-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .analysis-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .analysis-card h3 {
+        font-size: 1rem;
+        color: #b0b0b0;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .analysis-card h3 .badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-weight: normal;
+    }
+
+    .analysis-card h3 .badge.significant {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+    }
+
+    .analysis-card h3 .badge.not-significant {
+        background: rgba(158, 158, 158, 0.2);
+        color: #9e9e9e;
+    }
+
+    .hypothesis-box {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.85rem;
+    }
+
+    .hypothesis-box .label {
+        color: #888;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+
+    .hypothesis-box .value {
+        color: #e0e0e0;
+    }
+
+    .stats-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+    }
+
+    .stats-table th,
+    .stats-table td {
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stats-table th {
+        color: #888;
+        font-weight: normal;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+    }
+
+    .stats-table td {
+        color: #e0e0e0;
+    }
+
+    .stats-table .highlight {
+        color: #667eea;
+        font-weight: bold;
+    }
+
+    .interpretation-box {
+        background: rgba(102, 126, 234, 0.1);
+        border: 1px solid rgba(102, 126, 234, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        color: #b0b0b0;
+    }
+
+    .interpretation-box strong {
+        color: #667eea;
+    }
+
+    .plotly-chart {
+        width: 100%;
+        height: 350px;
+        margin-top: 1rem;
+    }
+
     /* User Marker in Charts */
     .user-marker {
         display: flex;
@@ -406,7 +539,7 @@
         font-weight: bold;
     }
 
-    /* Power Level - Blue */
+    /* Light Level - Blue */
     .user-marker.blue {
         background: rgba(33, 150, 243, 0.15);
         border: 1px solid rgba(33, 150, 243, 0.4);
@@ -439,6 +572,46 @@
     @keyframes bounce {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-3px); }
+    }
+
+    /* Chart Legend */
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .legend-line {
+        width: 20px;
+        height: 0;
+    }
+
+    .legend-line.mean {
+        border-top: 2px dashed rgba(255, 99, 132, 0.9);
+    }
+
+    .legend-line.q1, .legend-line.q3 {
+        border-top: 2px dashed rgba(54, 162, 235, 0.7);
+    }
+
+    .legend-line.median {
+        border-top: 2px dashed rgba(76, 175, 80, 0.9);
+    }
+
+    .legend-value {
+        color: #b0b0b0;
     }
 </style>
 {% endblock %}
@@ -481,7 +654,7 @@
                         </div>
                     </div>
                     <div class="filter-item">
-                        <label>Power Level</label>
+                        <label>Light Level</label>
                         <div class="filter-input-group">
                             <input type="number" id="minPowerLevel" min="0" value="" placeholder="0">
                             <span class="filter-separator">~</span>
@@ -512,7 +685,7 @@
             <div class="stat-value gradient">{{ stats.total_players|floatformat:0 }}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Avg Power Level</div>
+            <div class="stat-label">Avg Light Level</div>
             <div class="stat-value">{{ stats.avg_light_level|floatformat:0 }}</div>
         </div>
         <div class="stat-card">
@@ -531,7 +704,7 @@
         <h3>Your Position</h3>
         <div class="position-badges">
             <div class="position-badge">
-                <span class="badge-label">Power Level</span>
+                <span class="badge-label">Light Level</span>
                 <span class="badge-value {% if user_position.light_level.top_percent <= 10 %}top-10{% elif user_position.light_level.top_percent <= 25 %}top-25{% elif user_position.light_level.top_percent <= 50 %}top-50{% else %}bottom-50{% endif %}">
                     Top {{ user_position.light_level.top_percent|floatformat:0 }}%
                 </span>
@@ -585,9 +758,15 @@
     <!-- Distribution Charts -->
     <div class="distribution-charts">
         <div class="chart-container">
-            <h4>Power Level Distribution</h4>
+            <h4>Light Level Distribution</h4>
             <div class="chart-wrapper">
                 <canvas id="lightChart"></canvas>
+            </div>
+            <div class="chart-legend" id="lightChartLegend">
+                <div class="legend-item"><span class="legend-line mean"></span><span class="legend-value" id="lightMeanValue">Mean: -</span></div>
+                <div class="legend-item"><span class="legend-line q1"></span><span class="legend-value" id="lightQ1Value">Q1: -</span></div>
+                <div class="legend-item"><span class="legend-line median"></span><span class="legend-value" id="lightMedianValue">Median: -</span></div>
+                <div class="legend-item"><span class="legend-line q3"></span><span class="legend-value" id="lightQ3Value">Q3: -</span></div>
             </div>
             {% if user_position %}
             <div class="user-marker blue">
@@ -601,6 +780,12 @@
             <div class="chart-wrapper">
                 <canvas id="triumphChart"></canvas>
             </div>
+            <div class="chart-legend" id="triumphChartLegend">
+                <div class="legend-item"><span class="legend-line mean"></span><span class="legend-value" id="triumphMeanValue">Mean: -</span></div>
+                <div class="legend-item"><span class="legend-line q1"></span><span class="legend-value" id="triumphQ1Value">Q1: -</span></div>
+                <div class="legend-item"><span class="legend-line median"></span><span class="legend-value" id="triumphMedianValue">Median: -</span></div>
+                <div class="legend-item"><span class="legend-line q3"></span><span class="legend-value" id="triumphQ3Value">Q3: -</span></div>
+            </div>
             {% if user_position %}
             <div class="user-marker purple">
                 <span class="marker-icon">▲</span>
@@ -613,12 +798,122 @@
             <div class="chart-wrapper">
                 <canvas id="playtimeChart"></canvas>
             </div>
+            <div class="chart-legend" id="playtimeChartLegend">
+                <div class="legend-item"><span class="legend-line mean"></span><span class="legend-value" id="playtimeMeanValue">Mean: -</span></div>
+                <div class="legend-item"><span class="legend-line q1"></span><span class="legend-value" id="playtimeQ1Value">Q1: -</span></div>
+                <div class="legend-item"><span class="legend-line median"></span><span class="legend-value" id="playtimeMedianValue">Median: -</span></div>
+                <div class="legend-item"><span class="legend-line q3"></span><span class="legend-value" id="playtimeQ3Value">Q3: -</span></div>
+            </div>
             {% if user_position %}
             <div class="user-marker green">
                 <span class="marker-icon">▲</span>
                 <span class="marker-text">You: {{ user_position.play_time.value }}h</span>
             </div>
             {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Statistical Analysis Section -->
+<div class="analysis-section">
+    <h2>Statistical Analysis</h2>
+    <p style="text-align: center; color: #888; margin-bottom: 1.5rem;">
+        Hypothesis testing and correlation analysis based on player data
+    </p>
+
+    <div class="analysis-grid">
+        <!-- ANOVA: Class Light Level Comparison -->
+        <div class="analysis-card">
+            <h3>
+                Class Light Level Comparison
+                <span class="badge" id="anova-badge">Loading...</span>
+            </h3>
+            <div class="hypothesis-box">
+                <div class="label">Hypothesis</div>
+                <div class="value">H0: There is no difference in average light level between classes</div>
+                <div class="value" style="margin-top: 0.25rem;">H1: There is a difference in average light level between classes</div>
+            </div>
+            <table class="stats-table" id="anova-table">
+                <tr>
+                    <th>Class</th>
+                    <th>N</th>
+                    <th>Mean</th>
+                    <th>Std Dev</th>
+                </tr>
+                <tr>
+                    <td>Titan</td>
+                    <td id="titan-n">-</td>
+                    <td id="titan-mean">-</td>
+                    <td id="titan-std">-</td>
+                </tr>
+                <tr>
+                    <td>Hunter</td>
+                    <td id="hunter-n">-</td>
+                    <td id="hunter-mean">-</td>
+                    <td id="hunter-std">-</td>
+                </tr>
+                <tr>
+                    <td>Warlock</td>
+                    <td id="warlock-n">-</td>
+                    <td id="warlock-mean">-</td>
+                    <td id="warlock-std">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">F-statistic</th>
+                    <td colspan="2" class="highlight" id="f-stat">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">p-value</th>
+                    <td colspan="2" class="highlight" id="p-value-anova">-</td>
+                </tr>
+            </table>
+            <div class="interpretation-box" id="anova-interpretation">
+                Loading analysis results...
+            </div>
+            <div id="boxplot-chart" class="plotly-chart"></div>
+        </div>
+
+        <!-- Correlation: Light Level vs Triumph Score -->
+        <div class="analysis-card">
+            <h3>
+                Light Level vs Triumph Score
+                <span class="badge" id="correlation-badge">Loading...</span>
+            </h3>
+            <div class="hypothesis-box">
+                <div class="label">Hypothesis</div>
+                <div class="value">H0: There is no correlation between light level and triumph score (ρ = 0)</div>
+                <div class="value" style="margin-top: 0.25rem;">H1: There is a correlation between light level and triumph score (ρ ≠ 0)</div>
+            </div>
+            <table class="stats-table" id="correlation-table">
+                <tr>
+                    <th colspan="2">Sample Size</th>
+                    <td colspan="2" id="sample-size">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Correlation (r)</th>
+                    <td colspan="2" class="highlight" id="correlation-r">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">R-squared</th>
+                    <td colspan="2" id="r-squared">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">p-value</th>
+                    <td colspan="2" class="highlight" id="p-value-corr">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Strength</th>
+                    <td colspan="2" id="correlation-strength">-</td>
+                </tr>
+                <tr>
+                    <th colspan="2">Direction</th>
+                    <td colspan="2" id="correlation-direction">-</td>
+                </tr>
+            </table>
+            <div class="interpretation-box" id="correlation-interpretation">
+                Loading analysis results...
+            </div>
+            <div id="scatter-chart" class="plotly-chart"></div>
         </div>
     </div>
 </div>
@@ -640,6 +935,8 @@
 {% block extra_js %}
 {% if stats and stats.total_players > 0 %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Chart.js 기본 설정
@@ -701,6 +998,48 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
+    // 사분위수 및 평균 계산 함수 (동적 통계)
+    function calculateQuartiles(values) {
+        if (!values || values.length === 0) {
+            return { mean: null, median: null, q1: null, q3: null };
+        }
+
+        const sorted = [...values].sort((a, b) => a - b);
+        const n = sorted.length;
+
+        // 평균
+        const mean = sorted.reduce((a, b) => a + b, 0) / n;
+
+        // 중위값 (Q2)
+        const median = n % 2 === 0
+            ? (sorted[n/2 - 1] + sorted[n/2]) / 2
+            : sorted[Math.floor(n/2)];
+
+        // Q1 (25번째 백분위수)
+        const q1Idx = Math.floor(n * 0.25);
+        const q1 = sorted[q1Idx];
+
+        // Q3 (75번째 백분위수)
+        const q3Idx = Math.floor(n * 0.75);
+        const q3 = sorted[q3Idx];
+
+        return { mean, median, q1, q3 };
+    }
+
+    // 차트 범례 업데이트 함수
+    function updateChartLegend(chartType, stats) {
+        const suffix = chartType === 'playtime' ? 'h' : '';
+
+        document.getElementById(`${chartType}MeanValue`).textContent =
+            stats.mean !== null ? `Mean: ${Math.round(stats.mean)}${suffix}` : 'Mean: -';
+        document.getElementById(`${chartType}Q1Value`).textContent =
+            stats.q1 !== null ? `Q1: ${Math.round(stats.q1)}${suffix}` : 'Q1: -';
+        document.getElementById(`${chartType}MedianValue`).textContent =
+            stats.median !== null ? `Median: ${Math.round(stats.median)}${suffix}` : 'Median: -';
+        document.getElementById(`${chartType}Q3Value`).textContent =
+            stats.q3 !== null ? `Q3: ${Math.round(stats.q3)}${suffix}` : 'Q3: -';
+    }
+
     // 백분위 계산 함수 (값보다 작은 항목의 비율)
     function calculatePercentile(value, sortedValues) {
         if (!sortedValues || sortedValues.length === 0) return 50;
@@ -749,8 +1088,109 @@ document.addEventListener('DOMContentLoaded', function() {
         else valueEl.classList.add('bottom-50');
     }
 
+    // 통계 주석(annotation) 생성 함수
+    function createStatsAnnotations(statsObj, labels, bucketSize) {
+        const annotations = {};
+        if (!statsObj || !labels || labels.length === 0) return annotations;
+
+        // 라벨을 숫자 배열로 변환
+        const numericLabels = labels.map(l => parseInt(l));
+        const minLabel = Math.min(...numericLabels);
+        const maxLabel = Math.max(...numericLabels) + bucketSize;
+
+        // 값을 라벨 인덱스로 변환하는 함수
+        function valueToIndex(value) {
+            if (value === null || value === undefined) return null;
+
+            // 범위 밖 체크 먼저 - 차트 경계에 표시
+            if (value < minLabel) return -0.3;
+            if (value >= maxLabel) return numericLabels.length - 0.7;
+
+            // 먼저 정확히 매칭되는 버킷 찾기
+            for (let i = 0; i < numericLabels.length; i++) {
+                if (value >= numericLabels[i] && value < numericLabels[i] + bucketSize) {
+                    const relativePos = (value - numericLabels[i]) / bucketSize;
+                    return i + relativePos;
+                }
+            }
+
+            // 버킷이 없는 경우 (빈 버킷 건너뛴 경우) - 가장 가까운 버킷 찾기
+            for (let i = 0; i < numericLabels.length; i++) {
+                const nextLabel = i < numericLabels.length - 1 ? numericLabels[i + 1] : numericLabels[i] + bucketSize;
+                if (value >= numericLabels[i] && value < nextLabel) {
+                    const relPos = (value - numericLabels[i]) / (nextLabel - numericLabels[i]);
+                    return i + Math.min(relPos, 0.99);
+                }
+            }
+
+            return null;
+        }
+
+        // 평균선 (빨간색) - 라벨은 별도 범례에 표시
+        if (statsObj.mean !== null) {
+            const meanIdx = valueToIndex(statsObj.mean);
+            if (meanIdx !== null) {
+                annotations.meanLine = {
+                    type: 'line',
+                    xMin: meanIdx,
+                    xMax: meanIdx,
+                    borderColor: 'rgba(255, 99, 132, 0.9)',
+                    borderWidth: 2,
+                    borderDash: [6, 4]
+                };
+            }
+        }
+
+        // Q1선 (파란색) - 라벨은 별도 범례에 표시
+        if (statsObj.q1 !== null) {
+            const q1Idx = valueToIndex(statsObj.q1);
+            if (q1Idx !== null) {
+                annotations.q1Line = {
+                    type: 'line',
+                    xMin: q1Idx,
+                    xMax: q1Idx,
+                    borderColor: 'rgba(54, 162, 235, 0.7)',
+                    borderWidth: 2,
+                    borderDash: [4, 3]
+                };
+            }
+        }
+
+        // Q2/Median선 (녹색) - 라벨은 별도 범례에 표시
+        if (statsObj.median !== null) {
+            const medianIdx = valueToIndex(statsObj.median);
+            if (medianIdx !== null) {
+                annotations.medianLine = {
+                    type: 'line',
+                    xMin: medianIdx,
+                    xMax: medianIdx,
+                    borderColor: 'rgba(76, 175, 80, 0.9)',
+                    borderWidth: 2,
+                    borderDash: [5, 3]
+                };
+            }
+        }
+
+        // Q3선 (파란색) - 라벨은 별도 범례에 표시
+        if (statsObj.q3 !== null) {
+            const q3Idx = valueToIndex(statsObj.q3);
+            if (q3Idx !== null) {
+                annotations.q3Line = {
+                    type: 'line',
+                    xMin: q3Idx,
+                    xMax: q3Idx,
+                    borderColor: 'rgba(54, 162, 235, 0.7)',
+                    borderWidth: 2,
+                    borderDash: [4, 3]
+                };
+            }
+        }
+
+        return annotations;
+    }
+
     // 차트 생성/업데이트 함수
-    function createOrUpdateChart(chartInstance, canvasId, data, userValue, baseColor, highlightColor, bucketSize) {
+    function createOrUpdateChart(chartInstance, canvasId, data, userValue, baseColor, highlightColor, bucketSize, statsObj) {
         const ctx = document.getElementById(canvasId);
         if (!ctx) return null;
 
@@ -774,6 +1214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const borderColors = labels.map((_, i) => i === userIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.1)');
         const borderWidths = labels.map((_, i) => i === userIndex ? 3 : 1);
 
+        // 통계 주석 생성
+        const annotations = createStatsAnnotations(statsObj, labels, bucketSize);
+
         if (chartInstance) {
             // 차트 업데이트
             chartInstance.data.labels = labels;
@@ -781,6 +1224,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chartInstance.data.datasets[0].backgroundColor = backgroundColors;
             chartInstance.data.datasets[0].borderColor = borderColors;
             chartInstance.data.datasets[0].borderWidth = borderWidths;
+            chartInstance.options.plugins.annotation.annotations = annotations;
             chartInstance.update('none');
             return chartInstance;
         } else {
@@ -809,6 +1253,9 @@ document.addEventListener('DOMContentLoaded', function() {
                                 label: (ctx) => `${ctx.parsed.y} players`,
                                 title: (ctx) => `${ctx[0].label}+`
                             }
+                        },
+                        annotation: {
+                            annotations: annotations
                         }
                     },
                     scales: {
@@ -885,13 +1332,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const triumphDist = calculateBuckets(triumphValues, 5000);
         const playtimeDist = calculateBuckets(playtimeValues, 100);
 
-        // 차트 업데이트
+        // 필터된 데이터에서 동적 사분위수/평균 계산
+        const lightQuartiles = calculateQuartiles(lightValues);
+        const triumphQuartiles = calculateQuartiles(triumphValues);
+        const playtimeQuartiles = calculateQuartiles(playtimeValues);
+
+        // 차트 업데이트 (동적 통계 사용)
         lightChart = createOrUpdateChart(lightChart, 'lightChart', lightDist, userLight,
-            'rgba(33, 150, 243, 0.4)', 'rgba(33, 150, 243, 1)', 10);
+            'rgba(33, 150, 243, 0.4)', 'rgba(33, 150, 243, 1)', 10, lightQuartiles);
         triumphChart = createOrUpdateChart(triumphChart, 'triumphChart', triumphDist, userTriumph,
-            'rgba(156, 39, 176, 0.4)', 'rgba(156, 39, 176, 1)', 5000);
+            'rgba(156, 39, 176, 0.4)', 'rgba(156, 39, 176, 1)', 5000, triumphQuartiles);
         playtimeChart = createOrUpdateChart(playtimeChart, 'playtimeChart', playtimeDist, userPlaytime,
-            'rgba(76, 175, 80, 0.4)', 'rgba(76, 175, 80, 1)', 100);
+            'rgba(76, 175, 80, 0.4)', 'rgba(76, 175, 80, 1)', 100, playtimeQuartiles);
+
+        // 범례 값 업데이트
+        updateChartLegend('light', lightQuartiles);
+        updateChartLegend('triumph', triumphQuartiles);
+        updateChartLegend('playtime', playtimeQuartiles);
 
         // 필터 카운트 업데이트
         document.getElementById('filteredCount').textContent = filtered.length;
@@ -943,6 +1400,204 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 초기 차트 생성
     applyFilters();
+
+    // === Statistical Analysis Section ===
+    // Plotly 기본 레이아웃 설정
+    const plotlyLayout = {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#888', size: 11 },
+        margin: { l: 50, r: 20, t: 30, b: 50 },
+        xaxis: {
+            gridcolor: 'rgba(255,255,255,0.05)',
+            zerolinecolor: 'rgba(255,255,255,0.1)',
+        },
+        yaxis: {
+            gridcolor: 'rgba(255,255,255,0.05)',
+            zerolinecolor: 'rgba(255,255,255,0.1)',
+        },
+    };
+
+    const plotlyConfig = {
+        responsive: true,
+        displayModeBar: false,
+    };
+
+    // ANOVA 결과 로드
+    fetch('/api/statistics/class-comparison/')
+        .then(response => response.json())
+        .then(data => {
+            const test = data.hypothesis_test;
+
+            if (test.available) {
+                // 테이블 업데이트
+                const groups = test.groups;
+                document.getElementById('titan-n').textContent = groups.titan.n;
+                document.getElementById('titan-mean').textContent = groups.titan.mean.toFixed(1);
+                document.getElementById('titan-std').textContent = groups.titan.std.toFixed(1);
+                document.getElementById('hunter-n').textContent = groups.hunter.n;
+                document.getElementById('hunter-mean').textContent = groups.hunter.mean.toFixed(1);
+                document.getElementById('hunter-std').textContent = groups.hunter.std.toFixed(1);
+                document.getElementById('warlock-n').textContent = groups.warlock.n;
+                document.getElementById('warlock-mean').textContent = groups.warlock.mean.toFixed(1);
+                document.getElementById('warlock-std').textContent = groups.warlock.std.toFixed(1);
+
+                document.getElementById('f-stat').textContent = test.statistics.f_statistic.toFixed(4);
+                document.getElementById('p-value-anova').textContent = test.statistics.p_value < 0.0001 ? '< 0.0001' : test.statistics.p_value.toFixed(4);
+
+                // 배지 업데이트
+                const anovaBadge = document.getElementById('anova-badge');
+                if (test.result.significant) {
+                    anovaBadge.textContent = 'Significant';
+                    anovaBadge.className = 'badge significant';
+                } else {
+                    anovaBadge.textContent = 'Not Significant';
+                    anovaBadge.className = 'badge not-significant';
+                }
+
+                // 해석 업데이트
+                document.getElementById('anova-interpretation').innerHTML =
+                    `<strong>Result:</strong> ${test.result.interpretation} (α = ${test.statistics.alpha})`;
+
+                // 박스플롯 생성
+                const boxplotData = data.visualization_data.data;
+                const traces = [
+                    {
+                        y: boxplotData.titan,
+                        name: 'Titan',
+                        type: 'box',
+                        marker: { color: '#ef5350' },
+                        boxmean: true,
+                    },
+                    {
+                        y: boxplotData.hunter,
+                        name: 'Hunter',
+                        type: 'box',
+                        marker: { color: '#42a5f5' },
+                        boxmean: true,
+                    },
+                    {
+                        y: boxplotData.warlock,
+                        name: 'Warlock',
+                        type: 'box',
+                        marker: { color: '#ffee58' },
+                        boxmean: true,
+                    },
+                ];
+
+                const boxLayout = {
+                    ...plotlyLayout,
+                    title: { text: 'Light Level by Class', font: { size: 14, color: '#b0b0b0' } },
+                    yaxis: { ...plotlyLayout.yaxis, title: 'Light Level' },
+                    showlegend: false,
+                };
+
+                Plotly.newPlot('boxplot-chart', traces, boxLayout, plotlyConfig);
+            } else {
+                document.getElementById('anova-badge').textContent = 'Unavailable';
+                document.getElementById('anova-badge').className = 'badge not-significant';
+                document.getElementById('anova-interpretation').innerHTML =
+                    `<strong>Note:</strong> ${test.error || 'Analysis not available. Scipy may not be installed.'}`;
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load ANOVA data:', err);
+            document.getElementById('anova-interpretation').innerHTML =
+                '<strong>Error:</strong> Failed to load analysis data.';
+        });
+
+    // Correlation 결과 로드
+    fetch('/api/statistics/correlation/')
+        .then(response => response.json())
+        .then(data => {
+            const corr = data.correlation_analysis;
+
+            if (corr.available) {
+                // 테이블 업데이트
+                document.getElementById('sample-size').textContent = corr.sample_size;
+                document.getElementById('correlation-r').textContent = corr.statistics.correlation_coefficient.toFixed(4);
+                document.getElementById('r-squared').textContent = corr.statistics.r_squared.toFixed(4);
+                document.getElementById('p-value-corr').textContent = corr.statistics.p_value < 0.0001 ? '< 0.0001' : corr.statistics.p_value.toFixed(4);
+                document.getElementById('correlation-strength').textContent = corr.result.strength;
+                document.getElementById('correlation-direction').textContent = corr.result.direction;
+
+                // 배지 업데이트
+                const corrBadge = document.getElementById('correlation-badge');
+                if (corr.result.significant) {
+                    corrBadge.textContent = 'Significant';
+                    corrBadge.className = 'badge significant';
+                } else {
+                    corrBadge.textContent = 'Not Significant';
+                    corrBadge.className = 'badge not-significant';
+                }
+
+                // 해석 업데이트
+                document.getElementById('correlation-interpretation').innerHTML =
+                    `<strong>Result:</strong> ${corr.result.interpretation}`;
+
+                // 산점도 생성 (샘플링)
+                const scatterData = corr.scatter_data;
+                const maxPoints = 500; // 성능을 위해 최대 500개 포인트
+                let x = scatterData.x;
+                let y = scatterData.y;
+
+                if (x.length > maxPoints) {
+                    const step = Math.ceil(x.length / maxPoints);
+                    x = x.filter((_, i) => i % step === 0);
+                    y = y.filter((_, i) => i % step === 0);
+                }
+
+                // 회귀선 계산
+                const reg = corr.regression;
+                const xMin = Math.min(...x);
+                const xMax = Math.max(...x);
+                const regLineX = [xMin, xMax];
+                const regLineY = [reg.intercept + reg.slope * xMin, reg.intercept + reg.slope * xMax];
+
+                const scatterTraces = [
+                    {
+                        x: x,
+                        y: y,
+                        mode: 'markers',
+                        type: 'scatter',
+                        marker: {
+                            color: 'rgba(102, 126, 234, 0.5)',
+                            size: 6,
+                        },
+                        name: 'Players',
+                    },
+                    {
+                        x: regLineX,
+                        y: regLineY,
+                        mode: 'lines',
+                        type: 'scatter',
+                        line: { color: '#ff6b6b', width: 2, dash: 'dash' },
+                        name: 'Trend Line',
+                    },
+                ];
+
+                const scatterLayout = {
+                    ...plotlyLayout,
+                    title: { text: 'Light Level vs Triumph Score', font: { size: 14, color: '#b0b0b0' } },
+                    xaxis: { ...plotlyLayout.xaxis, title: 'Light Level' },
+                    yaxis: { ...plotlyLayout.yaxis, title: 'Triumph Score' },
+                    showlegend: true,
+                    legend: { x: 0, y: 1, bgcolor: 'rgba(0,0,0,0)' },
+                };
+
+                Plotly.newPlot('scatter-chart', scatterTraces, scatterLayout, plotlyConfig);
+            } else {
+                document.getElementById('correlation-badge').textContent = 'Unavailable';
+                document.getElementById('correlation-badge').className = 'badge not-significant';
+                document.getElementById('correlation-interpretation').innerHTML =
+                    `<strong>Note:</strong> ${corr.error || 'Analysis not available. Scipy may not be installed.'}`;
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load correlation data:', err);
+            document.getElementById('correlation-interpretation').innerHTML =
+                '<strong>Error:</strong> Failed to load analysis data.';
+        });
 });
 </script>
 {% endif %}

@@ -2,8 +2,14 @@ import math
 import statistics as py_statistics
 from datetime import date
 
-from django.db.models import Avg, Count, StdDev, Sum, Max
+from django.db.models import Avg, Count, StdDev, Sum, Max, Min
 from django.utils.dateparse import parse_datetime
+
+try:
+    from scipy import stats as scipy_stats
+    SCIPY_AVAILABLE = True
+except ImportError:
+    SCIPY_AVAILABLE = False
 
 from .models import (
     DestinyPlayer,
@@ -158,6 +164,114 @@ def calculate_distribution_buckets(values, bucket_size):
     return dict(sorted(buckets.items(), key=lambda x: int(x[0])))
 
 
+def calculate_extended_statistics(values):
+    """
+    확장 기술 통계 계산 (중위값, 사분위수, 왜도, 첨도).
+
+    Args:
+        values: 숫자 리스트
+
+    Returns:
+        dict with median, q1, q3, skewness, kurtosis, min, max
+    """
+    if not values or len(values) < 2:
+        return {
+            'median': None,
+            'q1': None,
+            'q3': None,
+            'min': None,
+            'max': None,
+            'skewness': None,
+            'kurtosis': None,
+        }
+
+    sorted_values = sorted(values)
+    n = len(sorted_values)
+
+    # 중위값
+    median = py_statistics.median(sorted_values)
+
+    # 사분위수 (Q1, Q3)
+    q1_idx = n // 4
+    q3_idx = (3 * n) // 4
+    q1 = sorted_values[q1_idx] if q1_idx < n else sorted_values[0]
+    q3 = sorted_values[q3_idx] if q3_idx < n else sorted_values[-1]
+
+    # 최소/최대
+    min_val = sorted_values[0]
+    max_val = sorted_values[-1]
+
+    # 왜도(skewness)와 첨도(kurtosis) - scipy 사용 가능시
+    skewness = None
+    kurtosis = None
+
+    if SCIPY_AVAILABLE and len(values) >= 3:
+        try:
+            skewness = float(scipy_stats.skew(values))
+            kurtosis = float(scipy_stats.kurtosis(values))
+        except Exception:
+            pass
+
+    return {
+        'median': median,
+        'q1': q1,
+        'q3': q3,
+        'min': min_val,
+        'max': max_val,
+        'skewness': skewness,
+        'kurtosis': kurtosis,
+    }
+
+
+def calculate_class_statistics():
+    """
+    클래스별 통계 계산.
+
+    Returns:
+        dict: {"titan": {...}, "hunter": {...}, "warlock": {...}}
+    """
+    class_names = {0: 'titan', 1: 'hunter', 2: 'warlock'}
+    class_stats = {}
+
+    for class_type, class_name in class_names.items():
+        light_values = list(
+            DestinyCharacter.objects.filter(
+                class_type=class_type,
+                light_level__gt=0
+            ).values_list('light_level', flat=True)
+        )
+
+        if light_values:
+            extended = calculate_extended_statistics(light_values)
+            class_stats[class_name] = {
+                'count': len(light_values),
+                'mean': sum(light_values) / len(light_values),
+                'std': py_statistics.stdev(light_values) if len(light_values) > 1 else 0,
+                'median': extended['median'],
+                'q1': extended['q1'],
+                'q3': extended['q3'],
+                'min': extended['min'],
+                'max': extended['max'],
+                'skewness': extended['skewness'],
+                'kurtosis': extended['kurtosis'],
+            }
+        else:
+            class_stats[class_name] = {
+                'count': 0,
+                'mean': 0,
+                'std': 0,
+                'median': None,
+                'q1': None,
+                'q3': None,
+                'min': None,
+                'max': None,
+                'skewness': None,
+                'kurtosis': None,
+            }
+
+    return class_stats
+
+
 def get_raw_player_data():
     """
     클라이언트 사이드 필터링을 위한 원본 플레이어 데이터 반환.
@@ -209,6 +323,7 @@ def refresh_global_statistics():
         light_level__gt=0
     ).values_list('light_level', flat=True))
     light_distribution = calculate_distribution_buckets(light_values, bucket_size=10)
+    light_extended = calculate_extended_statistics(light_values)
 
     # Triumph Score 통계 (플레이어 단위)
     triumph_stats = DestinyPlayer.objects.filter(active_triumph_score__gt=0).aggregate(
@@ -220,6 +335,7 @@ def refresh_global_statistics():
         active_triumph_score__gt=0
     ).values_list('active_triumph_score', flat=True))
     triumph_distribution = calculate_distribution_buckets(triumph_values, bucket_size=5000)
+    triumph_extended = calculate_extended_statistics(triumph_values)
 
     # Class Distribution
     class_counts = DestinyCharacter.objects.values('class_type').annotate(count=Count('id'))
@@ -227,6 +343,9 @@ def refresh_global_statistics():
     for item in class_counts:
         if item['class_type'] in class_dist:
             class_dist[item['class_type']] = item['count']
+
+    # Class-wise Statistics
+    class_statistics = calculate_class_statistics()
 
     # Play Time 통계 (플레이어별 총 시간, 시간 단위)
     player_playtimes = DestinyCharacter.objects.values('player').annotate(
@@ -241,30 +360,60 @@ def refresh_global_statistics():
             'stddev': py_statistics.stdev(playtime_hours) if len(playtime_hours) > 1 else 0,
         }
         playtime_distribution = calculate_distribution_buckets(playtime_hours, bucket_size=100)
+        playtime_extended = calculate_extended_statistics(playtime_hours)
     else:
         playtime_stats = {'avg': 0, 'stddev': 0}
         playtime_distribution = {}
+        playtime_extended = {
+            'median': None, 'q1': None, 'q3': None,
+            'min': None, 'max': None, 'skewness': None, 'kurtosis': None
+        }
 
     # 캐시 업데이트 또는 생성
     cache, _ = GlobalStatisticsCache.objects.update_or_create(
         pk=1,
         defaults={
+            # Light Level
             'avg_light_level': light_stats['avg'] or 0,
             'stddev_light_level': light_stats['stddev'] or 0,
+            'median_light_level': light_extended['median'],
+            'q1_light_level': light_extended['q1'],
+            'q3_light_level': light_extended['q3'],
+            'min_light_level': light_extended['min'],
+            'max_light_level': light_extended['max'],
+            'skewness_light_level': light_extended['skewness'],
+            'kurtosis_light_level': light_extended['kurtosis'],
             'light_level_distribution': light_distribution,
 
+            # Triumph Score
             'avg_triumph_score': triumph_stats['avg'] or 0,
             'stddev_triumph_score': triumph_stats['stddev'] or 0,
+            'median_triumph_score': triumph_extended['median'],
+            'q1_triumph_score': triumph_extended['q1'],
+            'q3_triumph_score': triumph_extended['q3'],
+            'min_triumph_score': triumph_extended['min'],
+            'max_triumph_score': triumph_extended['max'],
+            'skewness_triumph_score': triumph_extended['skewness'],
+            'kurtosis_triumph_score': triumph_extended['kurtosis'],
             'triumph_score_distribution': triumph_distribution,
 
+            # Class
             'titan_count': class_dist[0],
             'hunter_count': class_dist[1],
             'warlock_count': class_dist[2],
+            'class_statistics': class_statistics,
 
+            # Play Time
             'avg_play_time_hours': playtime_stats['avg'],
             'stddev_play_time_hours': playtime_stats['stddev'],
+            'median_play_time_hours': playtime_extended['median'],
+            'q1_play_time_hours': playtime_extended['q1'],
+            'q3_play_time_hours': playtime_extended['q3'],
+            'skewness_play_time_hours': playtime_extended['skewness'],
+            'kurtosis_play_time_hours': playtime_extended['kurtosis'],
             'play_time_distribution': playtime_distribution,
 
+            # Metadata
             'total_players': DestinyPlayer.objects.count(),
             'total_characters': DestinyCharacter.objects.count(),
         }
