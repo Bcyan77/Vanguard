@@ -260,3 +260,13 @@ def get_class_name(class_type):
 def get_platform_info(membership_type):
     """Get platform name and icon for membership type"""
     return MEMBERSHIP_TYPES.get(membership_type, {'name': 'Unknown', 'icon': 'unknown'})
+
+
+def get_activity_name(activity_hash):
+    """Get activity name from hash using database lookup"""
+    from fireteams.models import DestinySpecificActivity
+    try:
+        activity = DestinySpecificActivity.objects.get(hash=activity_hash)
+        return activity.name
+    except DestinySpecificActivity.DoesNotExist:
+        return "Unknown Activity"

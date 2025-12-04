@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ fireteam.title }} - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .warning-card {
+        background: rgba(244, 67, 54, 0.1);
+        border: 2px solid rgba(244, 67, 54, 0.5);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .warning-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+    }
+
+    .warning-card h1 {
+        font-size: 2rem;
+        color: #f44336;
+        margin-bottom: 1rem;
+    }
+
+    .fireteam-info {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+        text-align: left;
+    }
+
+    .fireteam-info h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: #fff;
+    }
+
+    .fireteam-info-meta {
+        color: #888;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+    }
+
+    .warning-text {
+        color: #e0e0e0;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .form-actions button,
+    .form-actions a {
+        flex: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="delete-container">
+    <div class="warning-card">
+        <div class="warning-icon">⚠️</div>
+        <h1>Delete Fireteam?</h1>
+
+        <div class="fireteam-info">
+            <h2>{{ fireteam.title }}</h2>
+            <p style="color: #b0b0b0;">{{ fireteam.description|truncatewords:20 }}</p>
+            <div class="fireteam-info-meta">
+                <div>Activity: {{ fireteam.get_activity_type_display }}</div>
+                <div>Members: {{ fireteam.current_members }}/{{ fireteam.max_members }}</div>
+                <div>Created: {{ fireteam.created_at|date:"M d, Y" }}</div>
+            </div>
+        </div>
+
+        <div class="warning-text">
+            <p><strong>This action cannot be undone!</strong></p>
+            <p>Deleting this fireteam will:</p>
+            <ul style="text-align: left; margin: 1rem 0; padding-left: 2rem;">
+                <li>Remove all fireteam members</li>
+                <li>Delete all pending applications</li>
+                <li>Permanently erase all fireteam data</li>
+            </ul>
+            {% if fireteam.current_members > 1 %}
+            <p style="color: #ff9800; margin-top: 1rem;">
+                ⚠️ Warning: This fireteam has {{ fireteam.current_members }} active members!
+            </p>
+            {% endif %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-actions">
+                <a href="{% url 'fireteams:fireteam_detail' fireteam.pk %}" class="btn btn-secondary">Cancel</a>
+                <button type="submit" class="btn btn-danger">Yes, Delete Fireteam</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

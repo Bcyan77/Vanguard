@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ fireteam.title }} - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fireteam-detail-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .fireteam-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .fireteam-title {
+        font-size: 2.5rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .fireteam-activity-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .fireteam-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    .status-open {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+        border: 1px solid #4caf50;
+    }
+
+    .status-full {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ff9800;
+        border: 1px solid #ff9800;
+    }
+
+    .status-closed {
+        background: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+        border: 1px solid #f44336;
+    }
+
+    .fireteam-description {
+        color: #e0e0e0;
+        line-height: 1.8;
+        font-size: 1.125rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .fireteam-meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+    }
+
+    .meta-icon {
+        font-size: 1.5rem;
+    }
+
+    .meta-label {
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .meta-value {
+        font-size: 1rem;
+        color: #fff;
+        font-weight: 500;
+    }
+
+    .fireteam-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+
+    .tag {
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.875rem;
+        color: #b0b0b0;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .action-buttons .btn {
+        flex: 1;
+    }
+
+    .members-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .member-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .member-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .member-info {
+        flex: 1;
+    }
+
+    .member-name {
+        font-weight: 500;
+        color: #fff;
+        margin-bottom: 0.25rem;
+    }
+
+    .member-role {
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .role-leader {
+        color: #ffd700;
+    }
+
+    .creator-badge {
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-slots {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .empty-slot {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #666;
+        font-size: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fireteam-detail-header">
+    <div class="fireteam-title-row">
+        <div>
+            <div class="fireteam-activity-badge">{{ fireteam.get_activity_type_display }}</div>
+            <h1 class="fireteam-title">{{ fireteam.title }}</h1>
+        </div>
+        <span class="fireteam-status status-{{ fireteam.status }}">
+            {% if fireteam.status == 'open' %}🟢 Open
+            {% elif fireteam.status == 'full' %}🟡 Full
+            {% else %}🔴 Closed{% endif %}
+        </span>
+    </div>
+
+    <p class="fireteam-description">{{ fireteam.description }}</p>
+
+    <div class="fireteam-meta-grid">
+        <div class="meta-item">
+            <span class="meta-icon">👥</span>
+            <div>
+                <div class="meta-label">Members</div>
+                <div class="meta-value">{{ fireteam.current_members }}/{{ fireteam.max_members }}</div>
+            </div>
+        </div>
+
+        <div class="meta-item">
+            <span class="meta-icon">👤</span>
+            <div>
+                <div class="meta-label">Created by</div>
+                <div class="meta-value">{{ fireteam.creator.display_name }}</div>
+            </div>
+        </div>
+
+        {% if fireteam.min_power_level %}
+        <div class="meta-item">
+            <span class="meta-icon">⚡</span>
+            <div>
+                <div class="meta-label">Min Power Level</div>
+                <div class="meta-value">{{ fireteam.min_power_level }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if fireteam.requires_mic %}
+        <div class="meta-item">
+            <span class="meta-icon">🎤</span>
+            <div>
+                <div class="meta-label">Microphone</div>
+                <div class="meta-value">Required</div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if fireteam.scheduled_time %}
+        <div class="meta-item">
+            <span class="meta-icon">🕐</span>
+            <div>
+                <div class="meta-label">Scheduled</div>
+                <div class="meta-value">{{ fireteam.scheduled_time|date:"M d, Y H:i" }}</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="meta-item">
+            <span class="meta-icon">📅</span>
+            <div>
+                <div class="meta-label">Created</div>
+                <div class="meta-value">{{ fireteam.created_at|timesince }} ago</div>
+            </div>
+        </div>
+    </div>
+
+    {% if fireteam.tags.all %}
+    <div class="fireteam-tags">
+        {% for tag in fireteam.tags.all %}
+        <span class="tag">#{{ tag.name }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+    <div class="action-buttons">
+        {% if is_creator %}
+        <a href="{% url 'fireteams:fireteam_edit' fireteam.pk %}" class="btn">✏️ Edit Fireteam</a>
+        <a href="{% url 'fireteams:fireteam_applications' fireteam.pk %}" class="btn btn-secondary">📋 View Applications</a>
+        <a href="{% url 'fireteams:fireteam_delete' fireteam.pk %}" class="btn btn-danger">🗑️ Delete Fireteam</a>
+        {% elif is_member %}
+        <a href="{% url 'fireteams:fireteam_leave' fireteam.pk %}" class="btn btn-danger">👋 Leave Fireteam</a>
+        {% elif has_pending_application %}
+        <button class="btn btn-secondary" disabled>⏳ Application Pending</button>
+        {% elif fireteam.status == 'open' and not fireteam.is_full %}
+        <a href="{% url 'fireteams:fireteam_apply' fireteam.pk %}" class="btn">🎮 Apply to Join</a>
+        {% elif fireteam.is_full %}
+        <button class="btn btn-secondary" disabled>Fireteam Full</button>
+        {% else %}
+        <button class="btn btn-secondary" disabled>Fireteam Closed</button>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="action-buttons">
+        <a href="{% url 'accounts:login' %}" class="btn">Login to Join</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="members-section">
+    <h2 class="section-title">👥 Fireteam Members</h2>
+
+    <div class="members-grid">
+        {% for member in fireteam.members.all %}
+        <div class="member-card">
+            <div class="member-avatar">👤</div>
+            <div class="member-info">
+                {% if member.user == fireteam.creator %}
+                <div class="creator-badge">⭐ Creator</div>
+                {% endif %}
+                <div class="member-name">{{ member.user.display_name }}</div>
+                <div class="member-role {% if member.role == 'leader' %}role-leader{% endif %}">
+                    {{ member.get_role_display }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if fireteam.current_members < fireteam.max_members %} <div style="margin-top: 1.5rem;">
+        <div class="meta-label" style="margin-bottom: 0.5rem;">Empty Slots: {{
+            fireteam.max_members|add:"-"|add:fireteam.current_members }}</div>
+        <div class="empty-slots">
+            {% for i in "x"|rjust:fireteam.max_members|add:"-"|add:fireteam.current_members %}
+            <div class="empty-slot">?</div>
+            {% endfor %}
+        </div>
+</div>
+{% endif %}
+</div>
+
+<div style="text-align: center;">
+    <a href="{% url 'fireteams:fireteam_list' %}" class="btn btn-secondary">← Back to Fireteams</a>
+</div>
+{% endblock %}

@@ -12,6 +12,7 @@ from .bungie_api import (
     get_all_characters_activities,
     get_class_name,
     get_platform_info,
+    get_activity_name,
 )
 from .services import sync_player_from_api
 
@@ -129,10 +130,12 @@ def player_detail(request, membership_type, membership_id):
         # Limit to 15 most recent
         recent_activities = recent_activities[:15]
 
-        # Add character class info to activities
+        # Add character class and activity name to activities
         char_class_map = {c['characterId']: c['className'] for c in characters}
         for activity in recent_activities:
             activity['characterClass'] = char_class_map.get(activity.get('characterId'), 'Unknown')
+            activity_hash = activity.get('activityDetails', {}).get('referenceId')
+            activity['activityName'] = get_activity_name(activity_hash) if activity_hash else 'Unknown Activity'
 
     # Platform info
     platform = get_platform_info(membership_type)

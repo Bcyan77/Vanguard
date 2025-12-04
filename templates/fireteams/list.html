@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fireteams - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .filters {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .fireteam-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .fireteam-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+        cursor: pointer;
+    }
+
+    .fireteam-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .fireteam-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .fireteam-title {
+        font-size: 1.25rem;
+        font-weight: bold;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .fireteam-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-open {
+        background: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+        border: 1px solid #4caf50;
+    }
+
+    .status-full {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ff9800;
+        border: 1px solid #ff9800;
+    }
+
+    .status-closed {
+        background: rgba(244, 67, 54, 0.2);
+        color: #f44336;
+        border: 1px solid #f44336;
+    }
+
+    .fireteam-activity {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        border-radius: 6px;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .fireteam-description {
+        color: #b0b0b0;
+        margin-bottom: 1rem;
+        line-height: 1.6;
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .fireteam-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .fireteam-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .fireteam-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .tag {
+        padding: 0.25rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: #b0b0b0;
+    }
+
+    .fireteam-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .creator-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #888;
+    }
+
+    .empty-state h2 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #b0b0b0;
+    }
+
+    .search-box {
+        position: relative;
+    }
+
+    .search-box input {
+        padding-left: 2.5rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+    }
+
+    /* Modal Form Styles */
+    .modal-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .modal-form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .modal-form-actions button {
+        flex: 1;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+    }
+
+    @media (max-width: 600px) {
+        .modal-form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🎮 Find Your Fireteam</h1>
+    {% if user.is_authenticated %}
+        <button type="button" class="btn" id="openCreateModal">+ Create Fireteam</button>
+    {% endif %}
+</div>
+
+<div class="filters">
+    <form method="get" action="{% url 'fireteams:fireteam_list' %}">
+        <div class="filter-row">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" name="search" placeholder="Search fireteams..." value="{{ search_query|default:'' }}">
+            </div>
+            
+            <select name="status">
+                <option value="">All Status</option>
+                <option value="open" {% if selected_status == 'open' %}selected{% endif %}>Open</option>
+                <option value="full" {% if selected_status == 'full' %}selected{% endif %}>Full</option>
+                <option value="closed" {% if selected_status == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+        </div>
+
+        <div class="filter-row">
+            <select id="filter_activity_type" name="activity_type">
+                <option value="">All Activity Types</option>
+                {% for activity_type in activity_types %}
+                    <option value="{{ activity_type.hash }}" {% if selected_activity_type == activity_type.hash|stringformat:"s" %}selected{% endif %}>{{ activity_type.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select id="filter_specific_activity" name="specific_activity" {% if not selected_activity_type %}disabled{% endif %}>
+                <option value="">All Specific Activities</option>
+            </select>
+
+            <select id="filter_activity_mode" name="activity_mode" {% if not selected_specific_activity %}disabled{% endif %}>
+                <option value="">All Modes</option>
+            </select>
+        </div>
+
+        <div class="filter-row">
+            <button type="submit" class="btn">Apply Filters</button>
+        </div>
+    </form>
+</div>
+
+{% if fireteams %}
+    <div class="fireteam-grid">
+        {% for fireteam in fireteams %}
+            <div class="fireteam-card" onclick="window.location.href='{% url 'fireteams:fireteam_detail' fireteam.pk %}'">
+                <div class="fireteam-header">
+                    <div>
+                        <div class="fireteam-activity">{{ fireteam.get_activity_display }}</div>
+                        <h3 class="fireteam-title">{{ fireteam.title }}</h3>
+                    </div>
+                    <span class="fireteam-status status-{{ fireteam.status }}">
+                        {% if fireteam.status == 'open' %}🟢 Open
+                        {% elif fireteam.status == 'full' %}🟡 Full
+                        {% else %}🔴 Closed{% endif %}
+                    </span>
+                </div>
+
+                <p class="fireteam-description">{{ fireteam.description }}</p>
+
+                <div class="fireteam-meta">
+                    <div class="fireteam-meta-item">
+                        <span>👥</span>
+                        <span>{{ fireteam.current_members }}/{{ fireteam.max_members }}</span>
+                    </div>
+                    {% if fireteam.requires_mic %}
+                        <div class="fireteam-meta-item">
+                            <span>🎤</span>
+                            <span>Mic Required</span>
+                        </div>
+                    {% endif %}
+                    {% if fireteam.min_power_level %}
+                        <div class="fireteam-meta-item">
+                            <span>⚡</span>
+                            <span>{{ fireteam.min_power_level }}+ Power</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if fireteam.tags.all %}
+                    <div class="fireteam-tags">
+                        {% for tag in fireteam.tags.all %}
+                            <span class="tag">#{{ tag.name }}</span>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="fireteam-footer">
+                    <div class="creator-info">
+                        <span>Created by</span>
+                        <strong>{{ fireteam.creator.display_name }}</strong>
+                    </div>
+                    {% if fireteam.scheduled_time %}
+                        <div class="fireteam-meta-item">
+                            <span>🕐</span>
+                            <span>{{ fireteam.scheduled_time|date:"M d, H:i" }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <h2>No Fireteams Found</h2>
+        <p>Be the first to create a fireteam!</p>
+        {% if user.is_authenticated %}
+            <button type="button" class="btn" style="margin-top: 1rem;" onclick="openModal()">Create Your First Fireteam</button>
+        {% else %}
+            <a href="{% url 'accounts:login' %}" class="btn" style="margin-top: 1rem;">Login to Create a Fireteam</a>
+        {% endif %}
+    </div>
+{% endif %}
+
+<!-- Create Fireteam Modal -->
+{% if user.is_authenticated %}
+<div id="createFireteamModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create New Fireteam</h2>
+            <button type="button" class="modal-close" id="closeModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="modalError" class="message error" style="display: none;"></div>
+            <form id="createFireteamForm" method="post" action="{% url 'fireteams:fireteam_create' %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="modal_title">Fireteam Title *</label>
+                    <input type="text" id="modal_title" name="title" required placeholder="e.g., LFG Vault of Glass - Chill Run">
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_description">Description *</label>
+                    <textarea id="modal_description" name="description" required
+                        placeholder="Describe your fireteam, requirements, and what you're looking for..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_activity_type">Activity Type *</label>
+                    <select id="modal_activity_type" name="activity_type" required>
+                        <option value="">Select Activity Type</option>
+                        {% for activity_type in activity_types %}
+                        <option value="{{ activity_type.hash }}">{{ activity_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_specific_activity">Specific Activity *</label>
+                    <select id="modal_specific_activity" name="specific_activity" required disabled>
+                        <option value="">Select Type First</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal_activity_mode">Difficulty / Mode (Optional)</label>
+                    <select id="modal_activity_mode" name="activity_mode" disabled>
+                        <option value="">Select Activity First</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group">
+                        <label for="modal_max_members">Max Members *</label>
+                        <input type="number" id="modal_max_members" name="max_members" value="6" min="2" max="12" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_min_power_level">Minimum Power Level</label>
+                        <input type="number" id="modal_min_power_level" name="min_power_level" placeholder="e.g., 1800">
+                    </div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group">
+                        <label for="modal_scheduled_time">Scheduled Time</label>
+                        <input type="datetime-local" id="modal_scheduled_time" name="scheduled_time">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="modal_tags">Tags (comma-separated)</label>
+                        <input type="text" id="modal_tags" name="tags" placeholder="e.g., chill, experienced, sherpa">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="modal_requires_mic" name="requires_mic">
+                        <label for="modal_requires_mic" style="margin-bottom: 0;">Microphone Required</label>
+                    </div>
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelModal">Cancel</button>
+                    <button type="submit" class="btn" id="submitBtn">Create Fireteam</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/cascading-activity-selector.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter cascading selector
+        new CascadingActivitySelector({
+            typeSelectId: 'filter_activity_type',
+            activitySelectId: 'filter_specific_activity',
+            modeSelectId: 'filter_activity_mode',
+            initialTypeHash: '{{ selected_activity_type|default:"" }}',
+            initialActivityHash: '{{ selected_specific_activity|default:"" }}',
+            initialModeHash: '{{ selected_activity_mode|default:"" }}'
+        });
+
+        {% if user.is_authenticated %}
+        // Modal Elements
+        const modal = document.getElementById('createFireteamModal');
+        const openBtn = document.getElementById('openCreateModal');
+        const closeBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancelModal');
+        const form = document.getElementById('createFireteamForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorDiv = document.getElementById('modalError');
+
+        let modalCascadingSelector = null;
+
+        // Open Modal
+        function openModal() {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Initialize cascading selector for modal form
+            if (!modalCascadingSelector) {
+                modalCascadingSelector = new CascadingActivitySelector({
+                    typeSelectId: 'modal_activity_type',
+                    activitySelectId: 'modal_specific_activity',
+                    modeSelectId: 'modal_activity_mode'
+                });
+            }
+        }
+
+        // Close Modal
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            errorDiv.style.display = 'none';
+            form.reset();
+
+            // Reset cascading selects
+            document.getElementById('modal_specific_activity').innerHTML = '<option value="">Select Type First</option>';
+            document.getElementById('modal_specific_activity').disabled = true;
+            document.getElementById('modal_activity_mode').innerHTML = '<option value="">Select Activity First</option>';
+            document.getElementById('modal_activity_mode').disabled = true;
+        }
+
+        // Event Listeners
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Close on overlay click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.classList.contains('active')) {
+                closeModal();
+            }
+        });
+
+        // Form Submit via AJAX
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+            errorDiv.style.display = 'none';
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    errorDiv.textContent = data.error || 'An error occurred. Please try again.';
+                    errorDiv.style.display = 'block';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Fireteam';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Network error. Please try again.';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Fireteam';
+            }
+        });
+
+        // Expose openModal globally for empty state button
+        window.openModal = openModal;
+        {% endif %}
+    });
+</script>
+{% endblock %}
