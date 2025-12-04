@@ -4,16 +4,16 @@ A web service for Destiny 2 players to create and join fireteams using Bungie.ne
 
 ## Features
 
-- 🔐 Bungie.net OAuth authentication
-- 👥 Create and manage fireteam recruitment posts
-- 🎯 3-tier activity selection (Activity Type → Specific Activity → Mode/Difficulty)
-- 🏷️ Tag-based fireteam filtering
-- 📝 Application system with accept/reject functionality
-- 🔍 Player search with Bungie.net integration
-- 👤 Player profile and character display
-- 📊 Statistics dashboard with distribution analysis
-- 🔌 REST API with Swagger/OpenAPI documentation
-- 🎮 Integration with Bungie.net API
+- Bungie.net OAuth authentication
+- Create and manage fireteam recruitment posts
+- 3-tier activity selection (Activity Type → Specific Activity → Mode/Difficulty)
+- Tag-based fireteam filtering
+- Application system with accept/reject functionality
+- Player search with Bungie.net integration
+- Player profile and character display
+- Statistics dashboard with distribution analysis
+- REST API with Swagger/OpenAPI documentation
+- Integration with Bungie.net API
 
 ## Tech Stack
 
@@ -209,11 +209,3 @@ docker-compose down
 rm db.sqlite3
 docker-compose run web python manage.py migrate
 ```
-
-## Contributing
-
-This is a personal project, but suggestions and improvements are welcome!
-
-## License
-
-MIT License
