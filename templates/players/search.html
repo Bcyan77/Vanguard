@@ -1,0 +1,240 @@
+{% extends 'base.html' %}
+
+{% block title %}Player Search - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        color: #888;
+    }
+
+    .search-container {
+        max-width: 600px;
+        margin: 0 auto 2rem;
+    }
+
+    .search-form {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .search-input-wrapper {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-input-wrapper input {
+        padding-left: 3rem;
+        font-size: 1.1rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #888;
+        font-size: 1.25rem;
+    }
+
+    .search-hint {
+        margin-top: 0.75rem;
+        font-size: 0.875rem;
+        color: #666;
+        text-align: center;
+    }
+
+    .search-hint code {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .results-header h2 {
+        font-size: 1.5rem;
+        color: #fff;
+    }
+
+    .results-count {
+        color: #888;
+        font-size: 0.875rem;
+    }
+
+    .player-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .player-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .player-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .player-card-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .platform-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px;
+    }
+
+    .platform-badge img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .player-info h3 {
+        font-size: 1.25rem;
+        color: #fff;
+        margin-bottom: 0.25rem;
+    }
+
+    .bungie-name {
+        color: #888;
+        font-size: 0.875rem;
+    }
+
+    .platform-name {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.75rem;
+        color: #b0b0b0;
+        margin-top: 0.75rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #888;
+    }
+
+    .empty-state h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #b0b0b0;
+    }
+
+    .error-message {
+        background: rgba(244, 67, 54, 0.1);
+        border: 1px solid rgba(244, 67, 54, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        color: #f44336;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 Player Search</h1>
+    <p>Search for Destiny 2 players by Bungie Name</p>
+</div>
+
+<div class="search-container">
+    <form method="get" class="search-form">
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" name="q" value="{{ query }}"
+                   placeholder="Enter Bungie Name or partial name..."
+                   autocomplete="off" autofocus>
+        </div>
+        <button type="submit" class="btn">Search</button>
+    </form>
+    <p class="search-hint">
+        Exact search: <code>Guardian#1234</code> | Prefix search: <code>Guardian</code> (min 3 characters)
+    </p>
+</div>
+
+{% if error %}
+<div class="error-message">
+    {{ error }}
+</div>
+{% endif %}
+
+{% if results %}
+<div class="results-header">
+    <h2>Search Results</h2>
+    <span class="results-count">{{ result_count }} player{{ result_count|pluralize }} found</span>
+</div>
+
+<div class="player-grid">
+    {% for player in results %}
+    <a href="{% url 'players:detail' player.membershipType player.membershipId %}" class="player-card">
+        <div class="player-card-header">
+            <div class="platform-badge">
+                <img src="{{ player.platformIcon }}" alt="{{ player.platformName }}">
+            </div>
+            <div class="player-info">
+                <h3>{{ player.displayName }}</h3>
+                {% if player.bungieGlobalDisplayName %}
+                <p class="bungie-name">{{ player.bungieGlobalDisplayName }}#{{ player.bungieGlobalDisplayNameCode }}</p>
+                {% endif %}
+            </div>
+        </div>
+        <span class="platform-name">{{ player.platformName }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% elif query %}
+<div class="empty-state">
+    <h2>No Players Found</h2>
+    <p>Try a different search term or check the spelling.</p>
+</div>
+{% else %}
+<div class="empty-state">
+    <h2>Search for Players</h2>
+    <p>Enter a Bungie Name above to find Destiny 2 players.</p>
+</div>
+{% endif %}
+{% endblock %}

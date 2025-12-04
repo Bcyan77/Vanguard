@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ user_info.displayName }} - Player Profile - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #888;
+        text-decoration: none;
+        margin-bottom: 1.5rem;
+        transition: color 0.3s;
+    }
+
+    .back-link:hover {
+        color: #667eea;
+    }
+
+    .player-header {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .platform-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 12px;
+    }
+
+    .platform-icon-large img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .player-header-info h1 {
+        font-size: 2rem;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+
+    .player-header-info .bungie-name {
+        color: #888;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .player-header-info .platform-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        font-size: 0.875rem;
+        color: #b0b0b0;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
+    }
+
+    .stat-card h3 {
+        color: #888;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        color: #fff;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .characters-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .character-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .character-header {
+        padding: 1.5rem;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .character-class {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .class-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .class-titan { border: 2px solid #f44336; }
+    .class-hunter { border: 2px solid #2196f3; }
+    .class-warlock { border: 2px solid #ffc107; }
+
+    .character-class h3 {
+        font-size: 1.25rem;
+        color: #fff;
+    }
+
+    .light-level {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #ffc107;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .character-body {
+        padding: 1.5rem;
+    }
+
+    .equipment-section h4 {
+        font-size: 0.875rem;
+        color: #888;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    .equipment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .equipment-item {
+        width: 40px;
+        height: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: #888;
+    }
+
+    .activities-section {
+        margin-bottom: 2rem;
+    }
+
+    .activity-list {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .activity-item {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(102, 126, 234, 0.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .activity-details h4 {
+        color: #fff;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-details p {
+        color: #888;
+        font-size: 0.875rem;
+    }
+
+    .activity-meta {
+        text-align: right;
+    }
+
+    .activity-date {
+        color: #888;
+        font-size: 0.875rem;
+    }
+
+    .activity-character {
+        font-size: 0.75rem;
+        color: #667eea;
+        margin-top: 0.25rem;
+    }
+
+    .empty-activities {
+        padding: 3rem;
+        text-align: center;
+        color: #888;
+    }
+
+    .no-characters {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 3rem;
+        text-align: center;
+        color: #888;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'players:search' %}" class="back-link">
+    ← Back to Search
+</a>
+
+<div class="player-header">
+    <div class="platform-icon-large">
+        <img src="{{ platform.icon }}" alt="{{ platform.name }}">
+    </div>
+    <div class="player-header-info">
+        <h1>{{ user_info.displayName }}</h1>
+        {% if user_info.bungieGlobalDisplayName %}
+        <p class="bungie-name">{{ user_info.bungieGlobalDisplayName }}#{{ user_info.bungieGlobalDisplayNameCode }}</p>
+        {% endif %}
+        <span class="platform-badge">{{ platform.name }}</span>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Triumph Score</h3>
+        <div class="stat-value">{{ triumph_score|default:0 }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Lifetime Score</h3>
+        <div class="stat-value">{{ lifetime_score|default:0 }}</div>
+    </div>
+    <div class="stat-card">
+        <h3>Characters</h3>
+        <div class="stat-value">{{ characters|length }}</div>
+    </div>
+</div>
+
+<h2 class="section-title">Characters</h2>
+
+{% if characters %}
+<div class="characters-grid">
+    {% for char in characters %}
+    <div class="character-card">
+        <div class="character-header">
+            <div class="character-class">
+                <div class="class-icon class-{{ char.className|lower }}">
+                    {% if char.className == 'Titan' %}🛡️
+                    {% elif char.className == 'Hunter' %}🏹
+                    {% elif char.className == 'Warlock' %}✨
+                    {% else %}❓{% endif %}
+                </div>
+                <h3>{{ char.className }}</h3>
+            </div>
+            <div class="light-level">
+                ⚡ {{ char.light }}
+            </div>
+        </div>
+        <div class="character-body">
+            <div class="equipment-section">
+                <h4>Equipped Items</h4>
+                <div class="equipment-list">
+                    {% for item in char.equipment|slice:":8" %}
+                    <div class="equipment-item" title="Item {{ item.itemHash }}">
+                        📦
+                    </div>
+                    {% empty %}
+                    <span style="color: #888; font-size: 0.875rem;">No equipment data</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="no-characters">
+    <p>No characters found. The profile may be private.</p>
+</div>
+{% endif %}
+
+<h2 class="section-title">Recent Activities</h2>
+
+<div class="activities-section">
+    {% if recent_activities %}
+    <div class="activity-list">
+        {% for activity in recent_activities %}
+        <div class="activity-item">
+            <div class="activity-info">
+                <div class="activity-icon">🎯</div>
+                <div class="activity-details">
+                    <h4>Activity</h4>
+                    <p>
+                        {% if activity.values.completed.basic.value == 1 %}
+                        ✅ Completed
+                        {% else %}
+                        ❌ Not completed
+                        {% endif %}
+                        {% if activity.values.kills %}
+                        • {{ activity.values.kills.basic.displayValue }} kills
+                        {% endif %}
+                        {% if activity.values.deaths %}
+                        • {{ activity.values.deaths.basic.displayValue }} deaths
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div class="activity-meta">
+                <div class="activity-date">{{ activity.period|slice:":10" }}</div>
+                <div class="activity-character">{{ activity.characterClass }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="activity-list">
+        <div class="empty-activities">
+            <p>No recent activities found.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

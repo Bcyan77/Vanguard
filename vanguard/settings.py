@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     # Custom apps
     'accounts',
     'parties',
+    'players',
 ]
 
 MIDDLEWARE = [

@@ -238,6 +238,7 @@
             <ul>
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'parties:party_list' %}">Parties</a></li>
+                <li><a href="{% url 'players:search' %}">Player Search</a></li>
                 <li><a href="{% url 'parties:party_create' %}">Create Party</a></li>
                 <li><a href="{% url 'accounts:profile' %}">{{ user.display_name }}</a></li>
                 <li><a href="{% url 'accounts:logout' %}" class="btn btn-secondary">Logout</a></li>
