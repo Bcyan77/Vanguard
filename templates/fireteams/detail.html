@@ -210,6 +210,108 @@
         color: #666;
         font-size: 1.5rem;
     }
+
+    /* Application Card Styles for Modal */
+    .application-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .application-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .applicant-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .applicant-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .applicant-details h3 {
+        font-size: 1.125rem;
+        color: #fff;
+        margin-bottom: 0.25rem;
+    }
+
+    .applicant-meta {
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .application-message {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #e0e0e0;
+        line-height: 1.6;
+        border-left: 3px solid rgba(102, 126, 234, 0.5);
+    }
+
+    .application-message.no-message {
+        color: #888;
+        font-style: italic;
+        border-left-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .application-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .application-actions .btn {
+        flex: 1;
+    }
+
+    /* Modal Form Styles */
+    .modal-form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .modal-form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .modal-form-actions button {
+        flex: 1;
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: auto;
+    }
+
+    @media (max-width: 600px) {
+        .modal-form-row {
+            grid-template-columns: 1fr;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -296,9 +398,9 @@
     {% if user.is_authenticated %}
     <div class="action-buttons">
         {% if is_creator %}
-        <a href="{% url 'fireteams:fireteam_edit' fireteam.pk %}" class="btn">✏️ Edit Fireteam</a>
-        <a href="{% url 'fireteams:fireteam_applications' fireteam.pk %}" class="btn btn-secondary">📋 View Applications</a>
-        <a href="{% url 'fireteams:fireteam_delete' fireteam.pk %}" class="btn btn-danger">🗑️ Delete Fireteam</a>
+        <button type="button" class="btn" id="openEditModal">✏️ Edit Fireteam</button>
+        <button type="button" class="btn btn-secondary" id="openApplicationsModal">📋 View Applications{% if applications %} ({{ applications.count }}){% endif %}</button>
+        <button type="button" class="btn btn-danger" id="openDeleteModal">🗑️ Delete Fireteam</button>
         {% elif is_member %}
         <a href="{% url 'fireteams:fireteam_leave' fireteam.pk %}" class="btn btn-danger">👋 Leave Fireteam</a>
         {% elif has_pending_application %}
@@ -353,4 +455,413 @@
 <div style="text-align: center;">
     <a href="{% url 'fireteams:fireteam_list' %}" class="btn btn-secondary">← Back to Fireteams</a>
 </div>
+
+{% if is_creator %}
+<!-- Edit Fireteam Modal -->
+<div id="editFireteamModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Fireteam</h2>
+            <button type="button" class="modal-close" id="closeEditModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="editModalError" class="message error" style="display: none;"></div>
+            <form id="editFireteamForm" method="post" action="{% url 'fireteams:fireteam_edit' fireteam.pk %}">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label for="edit_title">Fireteam Title *</label>
+                    <input type="text" id="edit_title" name="title" required value="{{ fireteam.title }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_description">Description</label>
+                    <textarea id="edit_description" name="description">{{ fireteam.description }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_activity_type">Activity Type *</label>
+                    <select id="edit_activity_type" name="activity_type" required>
+                        <option value="">Select Activity Type</option>
+                        {% for activity_type in activity_types %}
+                        <option value="{{ activity_type.hash }}" {% if fireteam.selected_activity_type.hash == activity_type.hash %}selected{% endif %}>{{ activity_type.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_specific_activity">Specific Activity *</label>
+                    <select id="edit_specific_activity" name="specific_activity" required disabled>
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit_activity_mode">Difficulty / Mode (Optional)</label>
+                    <select id="edit_activity_mode" name="activity_mode" disabled>
+                        <option value="">Loading...</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group">
+                        <label for="edit_max_members">Max Members *</label>
+                        <input type="number" id="edit_max_members" name="max_members" value="{{ fireteam.max_members }}" min="{{ fireteam.current_members_count }}" max="12" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_min_power_level">Minimum Power Level</label>
+                        <input type="number" id="edit_min_power_level" name="min_power_level" value="{{ fireteam.min_power_level|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="modal-form-row">
+                    <div class="form-group">
+                        <label for="edit_scheduled_time">Scheduled Time</label>
+                        <input type="datetime-local" id="edit_scheduled_time" name="scheduled_time" value="{% if fireteam.scheduled_time %}{{ fireteam.scheduled_time|date:'Y-m-d\TH:i' }}{% endif %}">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit_tags">Tags (comma-separated)</label>
+                        <input type="text" id="edit_tags" name="tags" value="{% for tag in fireteam.tags.all %}{{ tag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="edit_requires_mic" name="requires_mic" {% if fireteam.requires_mic %}checked{% endif %}>
+                        <label for="edit_requires_mic" style="margin-bottom: 0;">Microphone Required</label>
+                    </div>
+                </div>
+
+                <div class="modal-form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelEditModal">Cancel</button>
+                    <button type="submit" class="btn" id="editSubmitBtn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Applications Modal -->
+<div id="applicationsModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h2>Pending Applications</h2>
+            <button type="button" class="modal-close" id="closeApplicationsModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="applicationsContainer">
+                {% if applications %}
+                {% for application in applications %}
+                <div class="application-card" id="application-{{ application.pk }}">
+                    <div class="application-header">
+                        <div class="applicant-info">
+                            <div class="applicant-avatar">👤</div>
+                            <div class="applicant-details">
+                                <h3>{{ application.applicant.display_name }}</h3>
+                                <div class="applicant-meta">Applied {{ application.applied_at|timesince }} ago</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% if application.message %}
+                    <div class="application-message">{{ application.message }}</div>
+                    {% else %}
+                    <div class="application-message no-message">No message provided</div>
+                    {% endif %}
+                    <div class="application-actions">
+                        <button type="button" class="btn" onclick="handleApplication({{ application.pk }}, 'accept')">✅ Accept</button>
+                        <button type="button" class="btn btn-danger" onclick="handleApplication({{ application.pk }}, 'reject')">❌ Reject</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="empty-state" style="padding: 2rem; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                    <h3 style="color: #b0b0b0;">No Pending Applications</h3>
+                    <p style="color: #888;">You don't have any pending applications at the moment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Fireteam Modal -->
+<div id="deleteFireteamModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h2 style="color: #f44336;">Delete Fireteam?</h2>
+            <button type="button" class="modal-close" id="closeDeleteModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="delete-warning" style="text-align: center; padding: 1rem 0;">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
+                <p style="color: #e0e0e0; margin-bottom: 1rem;"><strong>This action cannot be undone!</strong></p>
+                <div style="background: rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: left;">
+                    <h3 style="font-size: 1.125rem; color: #fff; margin-bottom: 0.5rem;">{{ fireteam.title }}</h3>
+                    <p style="color: #888; font-size: 0.875rem;">{{ fireteam.description|truncatewords:15 }}</p>
+                    <div style="color: #888; font-size: 0.875rem; margin-top: 0.5rem;">
+                        Members: {{ fireteam.current_members_count }}/{{ fireteam.max_members }}
+                    </div>
+                </div>
+                <p style="color: #b0b0b0; font-size: 0.875rem;">Deleting this fireteam will remove all members and pending applications.</p>
+                {% if fireteam.current_members_count > 1 %}
+                <p style="color: #ff9800; margin-top: 1rem; font-size: 0.875rem;">
+                    ⚠️ Warning: This fireteam has {{ fireteam.current_members_count }} active members!
+                </p>
+                {% endif %}
+            </div>
+            <div id="deleteModalError" class="message error" style="display: none;"></div>
+            <div class="modal-form-actions">
+                <button type="button" class="btn btn-secondary" id="cancelDeleteModal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete Fireteam</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% load static %}
+<script src="{% static 'js/cascading-activity-selector.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if is_creator %}
+    // Edit Modal Elements
+    const editModal = document.getElementById('editFireteamModal');
+    const openEditBtn = document.getElementById('openEditModal');
+    const closeEditBtn = document.getElementById('closeEditModal');
+    const cancelEditBtn = document.getElementById('cancelEditModal');
+    const editForm = document.getElementById('editFireteamForm');
+    const editSubmitBtn = document.getElementById('editSubmitBtn');
+    const editErrorDiv = document.getElementById('editModalError');
+
+    // Applications Modal Elements
+    const appModal = document.getElementById('applicationsModal');
+    const openAppBtn = document.getElementById('openApplicationsModal');
+    const closeAppBtn = document.getElementById('closeApplicationsModal');
+
+    // Delete Modal Elements
+    const deleteModal = document.getElementById('deleteFireteamModal');
+    const openDeleteBtn = document.getElementById('openDeleteModal');
+    const closeDeleteBtn = document.getElementById('closeDeleteModal');
+    const cancelDeleteBtn = document.getElementById('cancelDeleteModal');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const deleteErrorDiv = document.getElementById('deleteModalError');
+
+    let editCascadingSelector = null;
+
+    // Open Edit Modal
+    function openEditModal() {
+        editModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Initialize cascading selector
+        if (!editCascadingSelector) {
+            editCascadingSelector = new CascadingActivitySelector({
+                typeSelectId: 'edit_activity_type',
+                activitySelectId: 'edit_specific_activity',
+                modeSelectId: 'edit_activity_mode',
+                initialTypeHash: '{{ fireteam.selected_activity_type.hash|default:"" }}',
+                initialActivityHash: '{{ fireteam.selected_specific_activity.hash|default:"" }}',
+                initialModeHash: '{{ fireteam.selected_activity_mode.hash|default:"" }}'
+            });
+        }
+    }
+
+    // Close Edit Modal
+    function closeEditModal() {
+        editModal.classList.remove('active');
+        document.body.style.overflow = '';
+        editErrorDiv.style.display = 'none';
+    }
+
+    // Open Applications Modal
+    function openApplicationsModal() {
+        appModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Close Applications Modal
+    function closeApplicationsModal() {
+        appModal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    // Open Delete Modal
+    function openDeleteModal() {
+        deleteModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // Close Delete Modal
+    function closeDeleteModal() {
+        deleteModal.classList.remove('active');
+        document.body.style.overflow = '';
+        deleteErrorDiv.style.display = 'none';
+    }
+
+    // Event Listeners
+    openEditBtn.addEventListener('click', openEditModal);
+    closeEditBtn.addEventListener('click', closeEditModal);
+    cancelEditBtn.addEventListener('click', closeEditModal);
+
+    openAppBtn.addEventListener('click', openApplicationsModal);
+    closeAppBtn.addEventListener('click', closeApplicationsModal);
+
+    openDeleteBtn.addEventListener('click', openDeleteModal);
+    closeDeleteBtn.addEventListener('click', closeDeleteModal);
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+
+    // Close modals on overlay click
+    editModal.addEventListener('click', function(e) {
+        if (e.target === editModal) closeEditModal();
+    });
+    appModal.addEventListener('click', function(e) {
+        if (e.target === appModal) closeApplicationsModal();
+    });
+    deleteModal.addEventListener('click', function(e) {
+        if (e.target === deleteModal) closeDeleteModal();
+    });
+
+    // Close on ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (editModal.classList.contains('active')) closeEditModal();
+            if (appModal.classList.contains('active')) closeApplicationsModal();
+            if (deleteModal.classList.contains('active')) closeDeleteModal();
+        }
+    });
+
+    // Edit Form Submit via AJAX
+    editForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        editSubmitBtn.disabled = true;
+        editSubmitBtn.textContent = 'Saving...';
+        editErrorDiv.style.display = 'none';
+
+        const formData = new FormData(editForm);
+
+        try {
+            const response = await fetch(editForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.reload();
+            } else {
+                editErrorDiv.textContent = data.error || 'An error occurred. Please try again.';
+                editErrorDiv.style.display = 'block';
+                editSubmitBtn.disabled = false;
+                editSubmitBtn.textContent = 'Save Changes';
+            }
+        } catch (error) {
+            editErrorDiv.textContent = 'Network error. Please try again.';
+            editErrorDiv.style.display = 'block';
+            editSubmitBtn.disabled = false;
+            editSubmitBtn.textContent = 'Save Changes';
+        }
+    });
+
+    // Delete Fireteam
+    confirmDeleteBtn.addEventListener('click', async function() {
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.textContent = 'Deleting...';
+        deleteErrorDiv.style.display = 'none';
+
+        try {
+            const response = await fetch('{% url "fireteams:fireteam_delete" fireteam.pk %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                window.location.href = data.redirect_url;
+            } else {
+                deleteErrorDiv.textContent = data.error || 'An error occurred. Please try again.';
+                deleteErrorDiv.style.display = 'block';
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.textContent = 'Yes, Delete Fireteam';
+            }
+        } catch (error) {
+            deleteErrorDiv.textContent = 'Network error. Please try again.';
+            deleteErrorDiv.style.display = 'block';
+            confirmDeleteBtn.disabled = false;
+            confirmDeleteBtn.textContent = 'Yes, Delete Fireteam';
+        }
+    });
+    {% endif %}
+});
+
+// Handle Application Accept/Reject
+async function handleApplication(applicationId, action) {
+    const url = action === 'accept'
+        ? `/fireteams/application/${applicationId}/accept/`
+        : `/fireteams/application/${applicationId}/reject/`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Remove the application card
+            const card = document.getElementById(`application-${applicationId}`);
+            if (card) {
+                card.remove();
+            }
+
+            // Check if no more applications
+            const container = document.getElementById('applicationsContainer');
+            if (!container.querySelector('.application-card')) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding: 2rem; text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                        <h3 style="color: #b0b0b0;">No Pending Applications</h3>
+                        <p style="color: #888;">You don't have any pending applications at the moment.</p>
+                    </div>
+                `;
+            }
+
+            // Update the button count
+            const appBtn = document.getElementById('openApplicationsModal');
+            const remaining = container.querySelectorAll('.application-card').length;
+            if (remaining > 0) {
+                appBtn.textContent = `📋 View Applications (${remaining})`;
+            } else {
+                appBtn.textContent = '📋 View Applications';
+            }
+
+            // Reload page if accepted to update member list
+            if (action === 'accept') {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'An error occurred. Please try again.');
+        }
+    } catch (error) {
+        alert('Network error. Please try again.');
+    }
+}
+</script>
 {% endblock %}

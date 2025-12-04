@@ -179,6 +179,7 @@ def fireteam_detail(request, pk):
     is_member = False
     is_creator = False
     has_pending_application = False
+    applications = None
 
     if request.user.is_authenticated:
         is_member = fireteam.is_member(request.user)
@@ -189,11 +190,20 @@ def fireteam_detail(request, pk):
             status='pending'
         ).exists()
 
+        # Get pending applications for creator (for modal)
+        if is_creator:
+            applications = fireteam.applications.filter(status='pending').select_related('applicant')
+
+    # Get activity types for edit modal
+    activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
+
     context = {
         'fireteam': fireteam,
         'is_member': is_member,
         'is_creator': is_creator,
         'has_pending_application': has_pending_application,
+        'activity_types': activity_types,
+        'applications': applications,
     }
 
     return render(request, 'fireteams/detail.html', context)
@@ -205,9 +215,12 @@ def fireteam_edit(request, pk):
     Edit an existing fireteam with 3-tier activity selection
     """
     fireteam = get_object_or_404(Fireteam, pk=pk)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # Only creator can edit
     if fireteam.creator != request.user:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'You do not have permission to edit this fireteam.'}, status=403)
         messages.error(request, 'You do not have permission to edit this fireteam.')
         return redirect('fireteams:fireteam_detail', pk=pk)
 
@@ -235,6 +248,8 @@ def fireteam_edit(request, pk):
 
         except (DestinyActivityType.DoesNotExist, DestinySpecificActivity.DoesNotExist,
                 DestinyActivityMode.DoesNotExist, ValueError) as e:
+            if is_ajax:
+                return JsonResponse({'success': False, 'error': f'Invalid activity selection: {str(e)}'}, status=400)
             messages.error(request, f'Invalid activity selection: {str(e)}')
             activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
             return render(request, 'fireteams/edit.html', {'fireteam': fireteam, 'activity_types': activity_types})
@@ -255,18 +270,14 @@ def fireteam_edit(request, pk):
             if tag_name:
                 FireteamTag.objects.create(fireteam=fireteam, name=tag_name)
 
+        if is_ajax:
+            return JsonResponse({'success': True})
+
         messages.success(request, 'Fireteam updated successfully!')
         return redirect('fireteams:fireteam_detail', pk=pk)
 
-    # GET: Get active activity types for form
-    activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
-
-    context = {
-        'fireteam': fireteam,
-        'activity_types': activity_types,
-    }
-
-    return render(request, 'fireteams/edit.html', context)
+    # GET 요청 시 detail 페이지로 리다이렉트 (모달 사용)
+    return redirect('fireteams:fireteam_detail', pk=pk)
 
 
 @login_required
@@ -275,19 +286,27 @@ def fireteam_delete(request, pk):
     Delete a fireteam
     """
     fireteam = get_object_or_404(Fireteam, pk=pk)
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # Only creator can delete
     if fireteam.creator != request.user:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'You do not have permission to delete this fireteam.'}, status=403)
         messages.error(request, 'You do not have permission to delete this fireteam.')
         return redirect('fireteams:fireteam_detail', pk=pk)
 
     if request.method == 'POST':
         fireteam_title = fireteam.title
         fireteam.delete()
+
+        if is_ajax:
+            return JsonResponse({'success': True, 'redirect_url': reverse('fireteams:fireteam_list')})
+
         messages.success(request, f'Fireteam "{fireteam_title}" deleted successfully!')
         return redirect('fireteams:fireteam_list')
 
-    return render(request, 'fireteams/delete_confirm.html', {'fireteam': fireteam})
+    # GET 요청 시 detail 페이지로 리다이렉트 (모달 사용)
+    return redirect('fireteams:fireteam_detail', pk=pk)
 
 
 @login_required
@@ -373,22 +392,10 @@ def fireteam_leave(request, pk):
 def fireteam_applications(request, pk):
     """
     View and manage applications for a fireteam (creator only)
+    Redirects to detail page where applications are shown in a modal
     """
-    fireteam = get_object_or_404(Fireteam, pk=pk)
-
-    # Only creator can view applications
-    if fireteam.creator != request.user:
-        messages.error(request, 'You do not have permission to view applications.')
-        return redirect('fireteams:fireteam_detail', pk=pk)
-
-    applications = fireteam.applications.filter(status='pending').select_related('applicant')
-
-    context = {
-        'fireteam': fireteam,
-        'applications': applications,
-    }
-
-    return render(request, 'fireteams/applications.html', context)
+    # detail 페이지로 리다이렉트 (모달 사용)
+    return redirect('fireteams:fireteam_detail', pk=pk)
 
 
 @login_required
@@ -398,15 +405,22 @@ def application_accept(request, application_id):
     """
     application = get_object_or_404(FireteamApplication, pk=application_id)
     fireteam = application.fireteam
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # Only creator can accept
     if fireteam.creator != request.user:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'You do not have permission to accept applications.'}, status=403)
         messages.error(request, 'You do not have permission to accept applications.')
         return redirect('fireteams:fireteam_detail', pk=fireteam.pk)
 
     if application.accept(request.user):
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': f'{application.applicant.display_name} has been added to the fireteam!'})
         messages.success(request, f'{application.applicant.display_name} has been added to the fireteam!')
     else:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Failed to accept application. Fireteam may be full.'}, status=400)
         messages.error(request, 'Failed to accept application. Fireteam may be full.')
 
     return redirect('fireteams:fireteam_applications', pk=fireteam.pk)
@@ -419,15 +433,22 @@ def application_reject(request, application_id):
     """
     application = get_object_or_404(FireteamApplication, pk=application_id)
     fireteam = application.fireteam
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
     # Only creator can reject
     if fireteam.creator != request.user:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'You do not have permission to reject applications.'}, status=403)
         messages.error(request, 'You do not have permission to reject applications.')
         return redirect('fireteams:fireteam_detail', pk=fireteam.pk)
 
     if application.reject(request.user):
+        if is_ajax:
+            return JsonResponse({'success': True, 'message': f'{application.applicant.display_name}\'s application has been rejected.'})
         messages.success(request, f'{application.applicant.display_name}\'s application has been rejected.')
     else:
+        if is_ajax:
+            return JsonResponse({'success': False, 'error': 'Failed to reject application.'}, status=400)
         messages.error(request, 'Failed to reject application.')
 
     return redirect('fireteams:fireteam_applications', pk=fireteam.pk)

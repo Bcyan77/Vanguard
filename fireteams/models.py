@@ -29,7 +29,7 @@ class Fireteam(models.Model):
     ]
 
     title = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
 
     # DEPRECATED: Legacy activity type field (to be removed)
     activity_type = models.CharField(
