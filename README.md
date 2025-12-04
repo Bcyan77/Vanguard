@@ -5,15 +5,22 @@ A web service for Destiny 2 players to create and join fireteams using Bungie.ne
 ## Features
 
 - 🔐 Bungie.net OAuth authentication
-- 👥 Create and manage party recruitment posts
-- 🏷️ Tag-based party filtering
+- 👥 Create and manage fireteam recruitment posts
+- 🎯 3-tier activity selection (Activity Type → Specific Activity → Mode/Difficulty)
+- 🏷️ Tag-based fireteam filtering
 - 📝 Application system with accept/reject functionality
+- 🔍 Player search with Bungie.net integration
+- 👤 Player profile and character display
+- 📊 Statistics dashboard with distribution analysis
+- 🔌 REST API with Swagger/OpenAPI documentation
 - 🎮 Integration with Bungie.net API
 
 ## Tech Stack
 
 - **Backend**: Django 5.x + Python 3.13
+- **API**: Django REST Framework + drf-spectacular (OpenAPI)
 - **Database**: SQLite
+- **Statistics**: SciPy + NumPy
 - **Development**: Docker
 - **Local HTTPS**: ngrok (required for Bungie OAuth)
 
@@ -110,28 +117,77 @@ docker-compose down
 ## Project Structure
 
 ```
-vanguard/
+bungie-party-recruitment/
 ├── docker-compose.yml          # Docker orchestration
 ├── Dockerfile                  # Docker image definition
 ├── requirements.txt            # Python dependencies
 ├── .env                        # Environment variables (not in git)
 ├── manage.py                   # Django management script
 ├── vanguard/                   # Django project settings
-├── accounts/                   # Authentication app
-├── parties/                    # Party management app
-└── templates/                  # HTML templates
+├── accounts/                   # Authentication app (OAuth, user profiles)
+├── fireteams/                  # Fireteam management app
+├── players/                    # Player search and statistics app
+├── templates/                  # HTML templates
+│   ├── accounts/               # Profile templates
+│   ├── fireteams/              # Fireteam list, detail, create, edit
+│   └── players/                # Search, detail, statistics
+└── static/                     # Static files (CSS, JS)
 ```
 
-## API Endpoints
+## Web Routes
 
+### Authentication
 - `/accounts/login/` - Initiate Bungie OAuth flow
 - `/accounts/callback/` - OAuth callback handler
 - `/accounts/logout/` - Logout
-- `/parties/` - List all parties
-- `/parties/create/` - Create new party
-- `/parties/<id>/` - Party detail
-- `/parties/<id>/apply/` - Apply to join party
-- `/parties/<id>/applications/` - Manage applications (leader only)
+- `/accounts/profile/` - User profile page
+
+### Fireteams
+- `/fireteams/` - List all fireteams
+- `/fireteams/create/` - Create new fireteam
+- `/fireteams/<id>/` - Fireteam detail
+- `/fireteams/<id>/edit/` - Edit fireteam (leader only)
+- `/fireteams/<id>/delete/` - Delete fireteam (leader only)
+- `/fireteams/<id>/apply/` - Apply to join fireteam
+- `/fireteams/<id>/leave/` - Leave fireteam
+- `/fireteams/<id>/applications/` - Manage applications (leader only)
+
+### Players
+- `/players/` - Player search
+- `/players/<membership_type>/<membership_id>/` - Player profile
+- `/players/statistics/` - Statistics dashboard
+
+## REST API
+
+API documentation available at:
+- **Swagger UI**: `/api/docs/`
+- **ReDoc**: `/api/redoc/`
+- **OpenAPI Schema**: `/api/schema/`
+
+### Fireteam Endpoints
+- `GET/POST /api/fireteams/` - List/Create fireteams
+- `GET/PUT/DELETE /api/fireteams/<id>/` - Fireteam detail
+- `POST /api/fireteams/<id>/apply/` - Apply to join
+- `POST /api/fireteams/<id>/leave/` - Leave fireteam
+- `GET /api/fireteams/<id>/applications/` - List applications
+- `POST /api/fireteams/<id>/applications/<id>/accept/` - Accept
+- `POST /api/fireteams/<id>/applications/<id>/reject/` - Reject
+
+### Activity Endpoints
+- `GET /api/activities/types/` - Activity types (Tier 1)
+- `GET /api/activities/specific/` - Specific activities (Tier 2)
+- `GET /api/activities/modes/` - Activity modes (Tier 3)
+
+### Player Endpoints
+- `GET /api/players/search/` - Search players
+- `GET /api/players/<membership_type>/<membership_id>/` - Player detail
+
+### Statistics Endpoints
+- `GET /api/statistics/descriptive/` - Descriptive statistics
+- `GET /api/statistics/class-comparison/` - Class comparison
+- `GET /api/statistics/correlation/` - Correlation analysis
+- `GET /api/statistics/distribution/` - Distribution data
+- `GET /api/statistics/hypothesis-tests/` - Hypothesis tests
 
 ## Troubleshooting
 

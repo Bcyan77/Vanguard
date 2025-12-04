@@ -74,24 +74,23 @@ docker-compose build
 
 ## Project Status
 
-✅ **Complete:**
+### ✅ Completed
 - Docker environment
 - Django project structure
 - Bungie OAuth authentication
 - User model with token encryption
-- Party management system (models, views, admin)
-- Application workflow
-- Base templates and home page
+- Fireteam management system (models, views, admin, templates)
+- Application workflow with accept/reject
+- 3-tier activity selection system
+- Player search and profiles
+- Player statistics dashboard
+- REST API with Swagger/OpenAPI documentation
+- All templates complete
 
-⏳ **In Progress:**
-- Party management templates
-- User profile template
-
-🔜 **Planned:**
-- Enhanced search and filtering
-- Real-time updates
-- Character information display
+### 🔜 Future Enhancements
+- Real-time updates (WebSocket)
 - Notification system
+- Advanced filtering options
 
 ## Troubleshooting
 
@@ -117,9 +116,10 @@ docker-compose run --rm web python manage.py migrate
 
 ```
 bungie-party-recruitment/
-├── accounts/          # Auth app
-├── parties/           # Party app
-├── vanguard/          # Django project
+├── accounts/          # Auth & user management
+├── fireteams/         # Fireteam recruitment
+├── players/           # Player search & statistics
+├── vanguard/          # Django project settings
 ├── templates/         # HTML templates
 ├── static/            # Static files
 ├── docker-compose.yml
@@ -128,20 +128,17 @@ bungie-party-recruitment/
 └── .env              # Your config
 ```
 
-## Next Steps
+## Quick Access URLs
 
-1. Register Bungie application
-2. Configure `.env` with credentials
-3. Start ngrok and Docker
-4. Test OAuth login
-5. Create templates (see PROJECT_STATUS.md)
+After starting the server:
+- **Main Site**: `https://your-ngrok-url.ngrok.io`
+- **API Docs**: `https://your-ngrok-url.ngrok.io/api/docs/`
+- **Admin Panel**: `https://your-ngrok-url.ngrok.io/admin/`
+- **Statistics**: `https://your-ngrok-url.ngrok.io/players/statistics/`
 
 ## Resources
 
 - Bungie API Docs: https://bungie-net.github.io/multi/
 - OAuth Guide: https://github.com/Bungie-net/api/wiki/OAuth-Documentation
 - Django Docs: https://docs.djangoproject.com/
-
----
-
-**Need Help?** Check PROJECT_STATUS.md for detailed information.
+- Django REST Framework: https://www.django-rest-framework.org/
