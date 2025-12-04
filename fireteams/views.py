@@ -5,10 +5,19 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.urls import reverse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from .models import (
     Fireteam, FireteamMember, FireteamTag, FireteamApplication,
     DestinyActivity, DestinyActivityType,
     DestinySpecificActivity, DestinyActivityMode
+)
+from .serializers import (
+    SpecificActivitiesResponseSerializer,
+    ActivityModesResponseSerializer,
+    ErrorResponseSerializer
 )
 
 
@@ -426,55 +435,121 @@ def application_reject(request, application_id):
 
 # API Endpoints for 3-Tier Cascading Selection
 
-@require_http_methods(["GET"])
-def api_get_specific_activities(request):
+class SpecificActivitiesAPIView(APIView):
     """
     API endpoint to get specific activities (Tier 2) for a given activity type (Tier 1)
-    GET /fireteams/api/specific-activities/?type_hash=<hash>
     """
-    type_hash = request.GET.get('type_hash')
 
-    if not type_hash:
-        return JsonResponse({'error': 'type_hash parameter is required'}, status=400)
+    @extend_schema(
+        summary="Get specific activities by activity type",
+        description="Returns a list of specific activities (Tier 2) for a given activity type hash (Tier 1). "
+                    "Used for cascading dropdown selection in fireteam creation.",
+        parameters=[
+            OpenApiParameter(
+                name='type_hash',
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='The hash of the activity type (e.g., Raid, Dungeon, Nightfall)'
+            )
+        ],
+        responses={
+            200: SpecificActivitiesResponseSerializer,
+            400: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        },
+        examples=[
+            OpenApiExample(
+                'Success Response',
+                value={
+                    'activities': [
+                        {'hash': '12345', 'name': 'Deep Stone Crypt'},
+                        {'hash': '67890', 'name': 'Vow of the Disciple'}
+                    ],
+                    'count': 2
+                },
+                response_only=True,
+                status_codes=['200']
+            )
+        ],
+        tags=['Fireteam Activities']
+    )
+    def get(self, request):
+        type_hash = request.GET.get('type_hash')
 
-    try:
-        # Get specific activities for this type
-        activities = DestinySpecificActivity.objects.filter(
-            activity_type_id=type_hash,
-            is_active=True
-        ).values('hash', 'name').order_by('name')
+        if not type_hash:
+            return Response({'error': 'type_hash parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return JsonResponse({
-            'activities': list(activities),
-            'count': len(activities)
-        })
+        try:
+            activities = DestinySpecificActivity.objects.filter(
+                activity_type_id=type_hash,
+                is_active=True
+            ).values('hash', 'name').order_by('name')
 
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+            return Response({
+                'activities': list(activities),
+                'count': len(activities)
+            })
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@require_http_methods(["GET"])
-def api_get_activity_modes(request):
+class ActivityModesAPIView(APIView):
     """
     API endpoint to get activity modes (Tier 3) for a given specific activity (Tier 2)
-    GET /fireteams/api/activity-modes/?activity_hash=<hash>
     """
-    activity_hash = request.GET.get('activity_hash')
 
-    if not activity_hash:
-        return JsonResponse({'error': 'activity_hash parameter is required'}, status=400)
+    @extend_schema(
+        summary="Get activity modes by specific activity",
+        description="Returns a list of activity modes (Tier 3) for a given specific activity hash (Tier 2). "
+                    "Used for cascading dropdown selection in fireteam creation.",
+        parameters=[
+            OpenApiParameter(
+                name='activity_hash',
+                type=str,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description='The hash of the specific activity (e.g., Deep Stone Crypt, Vow of the Disciple)'
+            )
+        ],
+        responses={
+            200: ActivityModesResponseSerializer,
+            400: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        },
+        examples=[
+            OpenApiExample(
+                'Success Response',
+                value={
+                    'modes': [
+                        {'hash': '111', 'name': 'Normal'},
+                        {'hash': '222', 'name': 'Master'}
+                    ],
+                    'count': 2
+                },
+                response_only=True,
+                status_codes=['200']
+            )
+        ],
+        tags=['Fireteam Activities']
+    )
+    def get(self, request):
+        activity_hash = request.GET.get('activity_hash')
 
-    try:
-        # Get modes available for this specific activity
-        modes = DestinyActivityMode.objects.filter(
-            activities__specific_activity_id=activity_hash,
-            is_active=True
-        ).order_by('display_order', 'name').values('hash', 'name')
+        if not activity_hash:
+            return Response({'error': 'activity_hash parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return JsonResponse({
-            'modes': list(modes),
-            'count': len(modes)
-        })
+        try:
+            modes = DestinyActivityMode.objects.filter(
+                activities__specific_activity_id=activity_hash,
+                is_active=True
+            ).order_by('display_order', 'name').values('hash', 'name')
 
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+            return Response({
+                'modes': list(modes),
+                'count': len(modes)
+            })
+
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

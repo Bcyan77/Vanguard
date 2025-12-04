@@ -19,6 +19,6 @@ urlpatterns = [
     path('application/<int:application_id>/reject/', views.application_reject, name='application_reject'),
 
     # API endpoints for 3-tier cascading selection
-    path('api/specific-activities/', views.api_get_specific_activities, name='api_get_specific_activities'),
-    path('api/activity-modes/', views.api_get_activity_modes, name='api_get_activity_modes'),
+    path('api/specific-activities/', views.SpecificActivitiesAPIView.as_view(), name='api_get_specific_activities'),
+    path('api/activity-modes/', views.ActivityModesAPIView.as_view(), name='api_get_activity_modes'),
 ]

@@ -56,6 +56,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Third party apps
+    'rest_framework',
+    'drf_spectacular',
     # Custom apps
     'accounts',
     'fireteams',
@@ -175,4 +178,17 @@ SESSION_SAVE_EVERY_REQUEST = True
 LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/parties/'
 LOGOUT_REDIRECT_URL = '/parties/'
+
+# Django REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# drf-spectacular settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Vanguard API',
+    'DESCRIPTION': 'Destiny 2 Party Recruitment API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
 
