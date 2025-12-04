@@ -36,7 +36,7 @@ def party_list(request):
         parties = parties.filter(selected_activity_mode_id=activity_mode_id)
 
     # Filter by status
-    status = request.GET.get('status', 'open')
+    status = request.GET.get('status', '')
     if status:
         parties = parties.filter(status=status)
 

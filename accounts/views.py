@@ -131,7 +131,7 @@ def logout_view(request):
     user_name = request.user.display_name
     logout(request)
     messages.success(request, f'Goodbye, {user_name}!')
-    return redirect('home')
+    return redirect('parties:party_list')
 
 
 @login_required
@@ -162,9 +162,6 @@ def profile_view(request):
 
 def home_view(request):
     """
-    Home page view
+    Home page view - Always redirect to party list
     """
-    if request.user.is_authenticated:
-        return redirect('parties:party_list')
-    
-    return render(request, 'home.html')
+    return redirect('parties:party_list')

@@ -188,6 +188,41 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        /* Select option styling - Chrome/Edge optimized */
+        select option {
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            padding: 0.5rem;
+        }
+
+        select option:hover {
+            background-color: rgba(102, 126, 234, 0.4);
+            color: #ffffff;
+        }
+
+        select option:checked {
+            background-color: #667eea !important;
+            background: #667eea !important;
+            color: #ffffff !important;
+            font-weight: bold;
+        }
+
+        select option[selected] {
+            background-color: #667eea;
+            color: #ffffff;
+        }
+
+        /* Disabled state styling */
+        select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        select option:disabled {
+            color: #666;
+            font-style: italic;
+        }
+
         textarea {
             resize: vertical;
             min-height: 100px;
