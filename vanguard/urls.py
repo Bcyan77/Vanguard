@@ -23,6 +23,7 @@ urlpatterns = [
     path('', home_view, name='home'),
     path('accounts/', include('accounts.urls')),
     path('fireteams/', include('fireteams.urls')),
+    path('parties/', include('parties.urls')),
     path('players/', include('players.urls')),
 ]
 
