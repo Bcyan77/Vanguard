@@ -62,7 +62,6 @@ INSTALLED_APPS = [
     # Custom apps
     'accounts',
     'fireteams',
-    'parties',
     'players',
 ]
 
@@ -176,8 +175,8 @@ SESSION_SAVE_EVERY_REQUEST = True
 
 # Login URL
 LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/parties/'
-LOGOUT_REDIRECT_URL = '/parties/'
+LOGIN_REDIRECT_URL = '/fireteams/'
+LOGOUT_REDIRECT_URL = '/fireteams/'
 
 # Django REST Framework
 REST_FRAMEWORK = {
