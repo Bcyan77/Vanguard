@@ -324,6 +324,27 @@ class DestinyActivityType(models.Model):
     redacted = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
+    # Deduplication tracking
+    is_canonical = models.BooleanField(
+        default=True,
+        help_text='True if this is the canonical/primary entry for this name',
+        db_index=True
+    )
+    canonical_entry = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='duplicates',
+        help_text='Points to canonical entry if this is a duplicate'
+    )
+    duplicate_group_name = models.CharField(
+        max_length=200,
+        blank=True,
+        db_index=True,
+        help_text='Group identifier for duplicate entries with same name'
+    )
+
     # Data management
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -382,6 +403,40 @@ class DestinySpecificActivity(models.Model):
     # Metadata
     redacted = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
+
+    # Name parsing fields (for 3-tier dropdown normalization)
+    original_name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Original name from Bungie API before parsing',
+        db_index=True
+    )
+    parsed_clean_name = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Activity name with difficulty/mode information removed'
+    )
+    parsed_difficulty = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Extracted difficulty (Heroic, Legend, Master, etc.)',
+        db_index=True
+    )
+    parsed_mode = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text='Extracted mode (Matchmade, Private, etc.)',
+        db_index=True
+    )
+    parsing_notes = models.TextField(
+        blank=True,
+        help_text='Notes about parsing decisions for manual review'
+    )
+    needs_manual_review = models.BooleanField(
+        default=False,
+        help_text='Flag for activities that could not be parsed automatically',
+        db_index=True
+    )
 
     # Data management
     created_at = models.DateTimeField(auto_now_add=True)

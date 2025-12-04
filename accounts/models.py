@@ -7,12 +7,12 @@ import base64
 
 class BungieUserManager(BaseUserManager):
     """Custom manager for BungieUser model"""
-    
+
     def create_user(self, bungie_membership_id, bungie_membership_type, display_name, **extra_fields):
         """Create and save a BungieUser"""
         if not bungie_membership_id:
             raise ValueError('The Bungie Membership ID must be set')
-        
+
         user = self.model(
             bungie_membership_id=bungie_membership_id,
             bungie_membership_type=bungie_membership_type,
@@ -21,13 +21,33 @@ class BungieUserManager(BaseUserManager):
         )
         user.save(using=self._db)
         return user
-    
+
     def create_superuser(self, bungie_membership_id, bungie_membership_type, display_name, **extra_fields):
         """Create and save a superuser"""
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
-        
+
         return self.create_user(bungie_membership_id, bungie_membership_type, display_name, **extra_fields)
+
+    def create_admin_user(self, username, password, **extra_fields):
+        """Create admin account with username/password"""
+        if not username:
+            raise ValueError('Username is required for admin accounts')
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_admin_account', True)
+        extra_fields.setdefault('bungie_membership_type', 254)  # BungieNext
+
+        user = self.model(
+            bungie_membership_id=f'admin_{username}',
+            username=username,
+            display_name=username,
+            **extra_fields
+        )
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
 
 class BungieUser(AbstractBaseUser):
@@ -49,12 +69,26 @@ class BungieUser(AbstractBaseUser):
     bungie_membership_id = models.CharField(max_length=100, unique=True, primary_key=True)
     bungie_membership_type = models.IntegerField(choices=MEMBERSHIP_TYPE_CHOICES)
     display_name = models.CharField(max_length=255)
-    
+
     # OAuth tokens (encrypted)
     access_token = models.TextField(blank=True, null=True)
     refresh_token = models.TextField(blank=True, null=True)
     token_expires_at = models.DateTimeField(null=True, blank=True)
-    
+
+    # Admin account support (for username/password authentication)
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='For admin accounts only (not used for Bungie OAuth users)'
+    )
+    password = models.CharField(max_length=128, blank=True)
+    is_admin_account = models.BooleanField(
+        default=False,
+        help_text='True if this is a username/password admin account (not Bungie OAuth)'
+    )
+
     # User metadata
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

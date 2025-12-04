@@ -52,8 +52,8 @@ def party_list(request):
     if tag:
         parties = parties.filter(tags__name__iexact=tag)
 
-    # Get active activity types for filter dropdown (Tier 1)
-    activity_types = DestinyActivityType.objects.filter(is_active=True).order_by('name')
+    # Get active canonical activity types for filter dropdown (Tier 1)
+    activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
 
     context = {
         'parties': parties,
@@ -101,7 +101,7 @@ def party_create(request):
         except (DestinyActivityType.DoesNotExist, DestinySpecificActivity.DoesNotExist,
                 DestinyActivityMode.DoesNotExist, ValueError) as e:
             messages.error(request, f'Invalid activity selection: {str(e)}')
-            activity_types = DestinyActivityType.objects.filter(is_active=True).order_by('name')
+            activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
             return render(request, 'parties/create.html', {'activity_types': activity_types})
 
         # Create party
@@ -140,7 +140,7 @@ def party_create(request):
         return redirect('parties:party_detail', pk=party.pk)
 
     # GET: Get active activity types for form (Tier 1)
-    activity_types = DestinyActivityType.objects.filter(is_active=True).order_by('name')
+    activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
 
     context = {
         'activity_types': activity_types,
@@ -219,7 +219,7 @@ def party_edit(request, pk):
         except (DestinyActivityType.DoesNotExist, DestinySpecificActivity.DoesNotExist,
                 DestinyActivityMode.DoesNotExist, ValueError) as e:
             messages.error(request, f'Invalid activity selection: {str(e)}')
-            activity_types = DestinyActivityType.objects.filter(is_active=True).order_by('name')
+            activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
             return render(request, 'parties/edit.html', {'party': party, 'activity_types': activity_types})
 
         party.max_members = int(request.POST.get('max_members', 6))
@@ -242,7 +242,7 @@ def party_edit(request, pk):
         return redirect('parties:party_detail', pk=pk)
 
     # GET: Get active activity types for form
-    activity_types = DestinyActivityType.objects.filter(is_active=True).order_by('name')
+    activity_types = DestinyActivityType.objects.filter(is_active=True, is_canonical=True).order_by('name')
 
     context = {
         'party': party,

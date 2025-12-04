@@ -104,6 +104,13 @@ DATABASES = {
 }
 
 
+# Authentication backends
+# https://docs.djangoproject.com/en/5.1/ref/settings/#authentication-backends
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.AdminAccountBackend',  # Admin username/password
+    'django.contrib.auth.backends.ModelBackend',  # Fallback
+]
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
