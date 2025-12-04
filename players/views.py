@@ -1,9 +1,14 @@
 """
 Player search views
 """
+import json
+
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from .bungie_api import (
     search_by_bungie_name,
@@ -14,10 +19,10 @@ from .bungie_api import (
     get_platform_info,
     get_activity_name,
 )
-from .services import sync_player_from_api
+from .models import GlobalStatisticsCache
+from .services import sync_player_from_api, get_user_statistics_position, refresh_global_statistics, get_raw_player_data
 
 
-@login_required
 def player_search(request):
     """
     Search for Destiny 2 players by Bungie Name
@@ -54,7 +59,84 @@ def player_search(request):
     return render(request, 'players/search.html', context)
 
 
+def player_statistics(request):
+    """
+    Display global player statistics including:
+    - Total players and characters tracked
+    - Average power level, triumph score, play time
+    - User's percentile position
+    - Class distribution
+    - Distribution charts with filtering
+    """
+    # 통계 데이터 가져오기
+    stats_cache = None
+    user_position = None
+
+    try:
+        stats_cache = GlobalStatisticsCache.objects.get(pk=1)
+        # 1시간 초과시 갱신
+        if (timezone.now() - stats_cache.last_updated).total_seconds() > 3600:
+            stats_cache = refresh_global_statistics()
+    except GlobalStatisticsCache.DoesNotExist:
+        stats_cache = refresh_global_statistics()
+
+    # 사용자 위치 계산 (로그인한 경우에만)
+    if stats_cache and stats_cache.total_players > 0 and request.user.is_authenticated:
+        user_position = get_user_statistics_position(request.user)
+
+    # 직업 분포 비율 계산
+    class_distribution = None
+    if stats_cache and stats_cache.total_characters > 0:
+        total_chars = stats_cache.titan_count + stats_cache.hunter_count + stats_cache.warlock_count
+        if total_chars > 0:
+            class_distribution = {
+                'Titan': {
+                    'count': stats_cache.titan_count,
+                    'percent': round(stats_cache.titan_count / total_chars * 100, 1),
+                },
+                'Hunter': {
+                    'count': stats_cache.hunter_count,
+                    'percent': round(stats_cache.hunter_count / total_chars * 100, 1),
+                },
+                'Warlock': {
+                    'count': stats_cache.warlock_count,
+                    'percent': round(stats_cache.warlock_count / total_chars * 100, 1),
+                },
+            }
+
+    # 클라이언트 사이드 필터링용 원본 데이터
+    raw_player_data = get_raw_player_data() if stats_cache and stats_cache.total_players > 0 else []
+
+    context = {
+        # 통계 데이터
+        'stats': stats_cache,
+        'user_position': user_position,
+        'class_distribution': class_distribution,
+        # Chart.js용 JSON 데이터
+        'light_distribution_json': json.dumps(stats_cache.light_level_distribution) if stats_cache else '{}',
+        'triumph_distribution_json': json.dumps(stats_cache.triumph_score_distribution) if stats_cache else '{}',
+        'playtime_distribution_json': json.dumps(stats_cache.play_time_distribution) if stats_cache else '{}',
+        # 클라이언트 필터링용 원본 데이터
+        'raw_player_data_json': json.dumps(raw_player_data),
+        # 개발 모드 플래그
+        'debug': settings.DEBUG,
+    }
+    return render(request, 'players/statistics.html', context)
+
+
 @login_required
+@require_POST
+def refresh_stats(request):
+    """
+    개발용: 통계 캐시 강제 새로고침
+    DEBUG 모드에서만 동작
+    """
+    if settings.DEBUG:
+        refresh_global_statistics()
+        messages.success(request, 'Statistics refreshed successfully.')
+    return redirect('players:statistics')
+
+
 def player_detail(request, membership_type, membership_id):
     """
     Display detailed player information:

@@ -81,6 +81,7 @@ class DestinyCharacter(models.Model):
     gender_type = models.IntegerField(choices=GENDER_TYPE_CHOICES, null=True, blank=True)
 
     light_level = models.IntegerField(default=0)
+    minutes_played_total = models.BigIntegerField(default=0)
 
     emblem_path = models.CharField(max_length=500, blank=True)
     emblem_background_path = models.CharField(max_length=500, blank=True)
@@ -154,3 +155,39 @@ class CharacterLightSnapshot(models.Model):
 
     def __str__(self):
         return f"{self.character} - {self.snapshot_date}: {self.light_level}"
+
+
+class GlobalStatisticsCache(models.Model):
+    """전역 통계 캐시 (싱글톤, pk=1)"""
+
+    # Light Level Statistics
+    avg_light_level = models.FloatField(default=0)
+    stddev_light_level = models.FloatField(default=0)
+    light_level_distribution = models.JSONField(default=dict)
+
+    # Triumph Score Statistics
+    avg_triumph_score = models.FloatField(default=0)
+    stddev_triumph_score = models.FloatField(default=0)
+    triumph_score_distribution = models.JSONField(default=dict)
+
+    # Class Distribution
+    titan_count = models.IntegerField(default=0)
+    hunter_count = models.IntegerField(default=0)
+    warlock_count = models.IntegerField(default=0)
+
+    # Play Time Statistics (hours)
+    avg_play_time_hours = models.FloatField(default=0)
+    stddev_play_time_hours = models.FloatField(default=0)
+    play_time_distribution = models.JSONField(default=dict)
+
+    # Metadata
+    total_players = models.IntegerField(default=0)
+    total_characters = models.IntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Global Statistics Cache'
+        verbose_name_plural = 'Global Statistics Caches'
+
+    def __str__(self):
+        return f"Global Statistics (Updated: {self.last_updated})"

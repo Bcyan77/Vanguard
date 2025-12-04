@@ -1,0 +1,949 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistics - Vanguard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .page-header h1 {
+        font-size: 2.5rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .page-header p {
+        color: #888;
+    }
+
+    /* Statistics Section */
+    .stats-section {
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stats-section-header {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .stats-section-header h2 {
+        font-size: 1.5rem;
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.25rem;
+    }
+
+    .stats-section-header p {
+        color: #666;
+        font-size: 0.875rem;
+    }
+
+    /* Stats Overview Grid */
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .stats-overview {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-card .stat-label {
+        font-size: 0.75rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-card .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fff;
+    }
+
+    .stat-card .stat-value.gradient {
+        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* User Position Badges */
+    .user-position {
+        margin-bottom: 1.5rem;
+    }
+
+    .user-position h3 {
+        font-size: 1rem;
+        color: #b0b0b0;
+        margin-bottom: 0.75rem;
+    }
+
+    .position-badges {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .position-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .position-badge .badge-label {
+        font-size: 0.75rem;
+        color: #888;
+    }
+
+    .position-badge .badge-value {
+        font-size: 0.875rem;
+        font-weight: bold;
+        color: #4caf50;
+    }
+
+    .position-badge .badge-value.top-10 {
+        color: #ffd700;
+    }
+
+    .position-badge .badge-value.top-25 {
+        color: #4caf50;
+    }
+
+    .position-badge .badge-value.top-50 {
+        color: #2196f3;
+    }
+
+    .position-badge .badge-value.bottom-50 {
+        color: #888;
+    }
+
+    /* Class Distribution */
+    .class-distribution {
+        margin-bottom: 1.5rem;
+    }
+
+    .class-distribution h3 {
+        font-size: 1rem;
+        color: #b0b0b0;
+        margin-bottom: 0.75rem;
+    }
+
+    .class-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .class-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .class-bar .class-name {
+        width: 80px;
+        font-size: 0.875rem;
+        color: #e0e0e0;
+    }
+
+    .class-bar .bar-container {
+        flex: 1;
+        height: 24px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .class-bar .bar-fill {
+        height: 100%;
+        border-radius: 12px;
+        transition: width 0.5s ease;
+    }
+
+    .class-bar .bar-fill.titan {
+        background: linear-gradient(90deg, #c62828, #ef5350);
+    }
+
+    .class-bar .bar-fill.hunter {
+        background: linear-gradient(90deg, #1565c0, #42a5f5);
+    }
+
+    .class-bar .bar-fill.warlock {
+        background: linear-gradient(90deg, #f9a825, #ffee58);
+    }
+
+    .class-bar .class-percent {
+        width: 50px;
+        font-size: 0.875rem;
+        color: #888;
+        text-align: right;
+    }
+
+    /* Distribution Charts */
+    .distribution-charts {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+
+    @media (max-width: 992px) {
+        .distribution-charts {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-container {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .chart-container h4 {
+        font-size: 0.875rem;
+        color: #b0b0b0;
+        margin-bottom: 0.75rem;
+        text-align: center;
+    }
+
+    .chart-wrapper {
+        position: relative;
+        height: 200px;
+    }
+
+    .no-data-message {
+        text-align: center;
+        color: #666;
+        padding: 2rem;
+    }
+
+    /* Filter Panel */
+    .filter-panel {
+        margin-bottom: 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+    }
+
+    .filter-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .filter-toggle:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-toggle h3 {
+        font-size: 0.95rem;
+        color: #b0b0b0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-toggle .toggle-icon {
+        transition: transform 0.2s;
+    }
+
+    .filter-toggle.open .toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .filter-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    .filter-content.open {
+        max-height: 400px;
+    }
+
+    .filter-content-inner {
+        padding: 0 1.25rem 1.25rem;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    @media (max-width: 768px) {
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-item label {
+        font-size: 0.8rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filter-input-group input[type="number"] {
+        width: 70px;
+        padding: 0.4rem 0.5rem;
+        font-size: 0.875rem;
+        text-align: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: #fff;
+    }
+
+    .filter-input-group input[type="number"]:focus {
+        outline: none;
+        border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .filter-separator {
+        color: #666;
+        font-size: 0.875rem;
+    }
+
+    .filter-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .filter-count {
+        font-size: 0.875rem;
+        color: #888;
+    }
+
+    .filter-count strong {
+        color: #667eea;
+    }
+
+    .btn-reset {
+        padding: 0.4rem 1rem;
+        font-size: 0.8rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        color: #b0b0b0;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-reset:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+    }
+
+    /* User Marker in Charts */
+    .user-marker {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+    }
+
+    .user-marker .marker-icon {
+        font-size: 0.875rem;
+        animation: bounce 1s ease infinite;
+    }
+
+    .user-marker .marker-text {
+        font-size: 0.875rem;
+        font-weight: bold;
+    }
+
+    /* Power Level - Blue */
+    .user-marker.blue {
+        background: rgba(33, 150, 243, 0.15);
+        border: 1px solid rgba(33, 150, 243, 0.4);
+    }
+    .user-marker.blue .marker-icon,
+    .user-marker.blue .marker-text {
+        color: #2196f3;
+    }
+
+    /* Triumph Score - Purple */
+    .user-marker.purple {
+        background: rgba(156, 39, 176, 0.15);
+        border: 1px solid rgba(156, 39, 176, 0.4);
+    }
+    .user-marker.purple .marker-icon,
+    .user-marker.purple .marker-text {
+        color: #9c27b0;
+    }
+
+    /* Play Time - Green */
+    .user-marker.green {
+        background: rgba(76, 175, 80, 0.15);
+        border: 1px solid rgba(76, 175, 80, 0.4);
+    }
+    .user-marker.green .marker-icon,
+    .user-marker.green .marker-text {
+        color: #4caf50;
+    }
+
+    @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Global Statistics</h1>
+    <p>Player statistics across all tracked Destiny 2 guardians</p>
+</div>
+
+{% if stats and stats.total_players > 0 %}
+<div class="stats-section">
+    <div class="stats-section-header">
+        <p id="stats-player-count">{{ stats.total_players }} players / {{ stats.total_characters }} characters tracked</p>
+        {% if debug %}
+        <form method="post" action="{% url 'players:refresh_stats' %}" style="margin-top: 0.5rem;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                Refresh Stats
+            </button>
+        </form>
+        {% endif %}
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <div class="filter-toggle" id="filterToggle">
+            <h3><span>Filter Options</span></h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="filter-content" id="filterContent">
+            <div class="filter-content-inner">
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label>Play Time (hours)</label>
+                        <div class="filter-input-group">
+                            <input type="number" id="minPlayTime" min="0" value="" placeholder="0">
+                            <span class="filter-separator">~</span>
+                            <input type="number" id="maxPlayTime" min="0" value="" placeholder="max">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>Power Level</label>
+                        <div class="filter-input-group">
+                            <input type="number" id="minPowerLevel" min="0" value="" placeholder="0">
+                            <span class="filter-separator">~</span>
+                            <input type="number" id="maxPowerLevel" min="0" value="" placeholder="max">
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <label>Triumph Score</label>
+                        <div class="filter-input-group">
+                            <input type="number" id="minTriumphScore" min="0" value="" placeholder="0">
+                            <span class="filter-separator">~</span>
+                            <input type="number" id="maxTriumphScore" min="0" value="" placeholder="max">
+                        </div>
+                    </div>
+                </div>
+                <div class="filter-footer">
+                    <span class="filter-count">Showing: <strong id="filteredCount">{{ stats.total_players }}</strong> / {{ stats.total_players }} players</span>
+                    <button type="button" class="btn-reset" id="resetFilters">Reset Filters</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-label">Total Players</div>
+            <div class="stat-value gradient">{{ stats.total_players|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Avg Power Level</div>
+            <div class="stat-value">{{ stats.avg_light_level|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Avg Triumph Score</div>
+            <div class="stat-value">{{ stats.avg_triumph_score|floatformat:0 }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Avg Play Time</div>
+            <div class="stat-value">{{ stats.avg_play_time_hours|floatformat:0 }}h</div>
+        </div>
+    </div>
+
+    <!-- User Position -->
+    {% if user_position %}
+    <div class="user-position">
+        <h3>Your Position</h3>
+        <div class="position-badges">
+            <div class="position-badge">
+                <span class="badge-label">Power Level</span>
+                <span class="badge-value {% if user_position.light_level.top_percent <= 10 %}top-10{% elif user_position.light_level.top_percent <= 25 %}top-25{% elif user_position.light_level.top_percent <= 50 %}top-50{% else %}bottom-50{% endif %}">
+                    Top {{ user_position.light_level.top_percent|floatformat:0 }}%
+                </span>
+            </div>
+            <div class="position-badge">
+                <span class="badge-label">Triumph Score</span>
+                <span class="badge-value {% if user_position.triumph_score.top_percent <= 10 %}top-10{% elif user_position.triumph_score.top_percent <= 25 %}top-25{% elif user_position.triumph_score.top_percent <= 50 %}top-50{% else %}bottom-50{% endif %}">
+                    Top {{ user_position.triumph_score.top_percent|floatformat:0 }}%
+                </span>
+            </div>
+            <div class="position-badge">
+                <span class="badge-label">Play Time</span>
+                <span class="badge-value {% if user_position.play_time.top_percent <= 10 %}top-10{% elif user_position.play_time.top_percent <= 25 %}top-25{% elif user_position.play_time.top_percent <= 50 %}top-50{% else %}bottom-50{% endif %}">
+                    Top {{ user_position.play_time.top_percent|floatformat:0 }}%
+                </span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Class Distribution -->
+    {% if class_distribution %}
+    <div class="class-distribution">
+        <h3>Class Distribution</h3>
+        <div class="class-bars">
+            <div class="class-bar">
+                <span class="class-name">Titan</span>
+                <div class="bar-container">
+                    <div class="bar-fill titan" style="width: {{ class_distribution.Titan.percent }}%;"></div>
+                </div>
+                <span class="class-percent">{{ class_distribution.Titan.percent }}%</span>
+            </div>
+            <div class="class-bar">
+                <span class="class-name">Hunter</span>
+                <div class="bar-container">
+                    <div class="bar-fill hunter" style="width: {{ class_distribution.Hunter.percent }}%;"></div>
+                </div>
+                <span class="class-percent">{{ class_distribution.Hunter.percent }}%</span>
+            </div>
+            <div class="class-bar">
+                <span class="class-name">Warlock</span>
+                <div class="bar-container">
+                    <div class="bar-fill warlock" style="width: {{ class_distribution.Warlock.percent }}%;"></div>
+                </div>
+                <span class="class-percent">{{ class_distribution.Warlock.percent }}%</span>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Distribution Charts -->
+    <div class="distribution-charts">
+        <div class="chart-container">
+            <h4>Power Level Distribution</h4>
+            <div class="chart-wrapper">
+                <canvas id="lightChart"></canvas>
+            </div>
+            {% if user_position %}
+            <div class="user-marker blue">
+                <span class="marker-icon">▲</span>
+                <span class="marker-text">You: {{ user_position.light_level.value }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="chart-container">
+            <h4>Triumph Score Distribution</h4>
+            <div class="chart-wrapper">
+                <canvas id="triumphChart"></canvas>
+            </div>
+            {% if user_position %}
+            <div class="user-marker purple">
+                <span class="marker-icon">▲</span>
+                <span class="marker-text">You: {{ user_position.triumph_score.value|floatformat:0 }}</span>
+            </div>
+            {% endif %}
+        </div>
+        <div class="chart-container">
+            <h4>Play Time Distribution</h4>
+            <div class="chart-wrapper">
+                <canvas id="playtimeChart"></canvas>
+            </div>
+            {% if user_position %}
+            <div class="user-marker green">
+                <span class="marker-icon">▲</span>
+                <span class="marker-text">You: {{ user_position.play_time.value }}h</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% elif stats %}
+<div class="stats-section">
+    <div class="no-data-message">
+        <p>No statistics available yet. Search for players to start collecting data.</p>
+    </div>
+</div>
+{% else %}
+<div class="stats-section">
+    <div class="no-data-message">
+        <p>Statistics are being calculated. Please check back later.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if stats and stats.total_players > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart.js 기본 설정
+    Chart.defaults.color = '#888';
+    Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+    // 원본 플레이어 데이터 (필터링용)
+    const rawPlayerData = {{ raw_player_data_json|safe }};
+    const totalPlayers = rawPlayerData.length;
+
+    // 사용자 위치 데이터
+    {% if user_position %}
+    const userLight = {{ user_position.light_level.value }};
+    const userTriumph = {{ user_position.triumph_score.value }};
+    const userPlaytime = {{ user_position.play_time.value }};
+    {% else %}
+    const userLight = null;
+    const userTriumph = null;
+    const userPlaytime = null;
+    {% endif %}
+
+    // 차트 인스턴스 저장
+    let lightChart = null;
+    let triumphChart = null;
+    let playtimeChart = null;
+
+    // 필터 상태
+    let filters = {
+        minPlayTime: null,
+        maxPlayTime: null,
+        minPowerLevel: null,
+        maxPowerLevel: null,
+        minTriumphScore: null,
+        maxTriumphScore: null
+    };
+
+    // 분포 버킷 계산 함수
+    function calculateBuckets(values, bucketSize) {
+        if (!values || values.length === 0) return {};
+        const buckets = {};
+        values.forEach(value => {
+            const bucketStart = Math.floor(value / bucketSize) * bucketSize;
+            const label = String(bucketStart);
+            buckets[label] = (buckets[label] || 0) + 1;
+        });
+        // 정렬
+        return Object.keys(buckets)
+            .sort((a, b) => parseInt(a) - parseInt(b))
+            .reduce((obj, key) => { obj[key] = buckets[key]; return obj; }, {});
+    }
+
+    // 통계 계산 함수
+    function calculateStats(values) {
+        if (!values || values.length === 0) return { avg: 0, count: 0 };
+        const sum = values.reduce((a, b) => a + b, 0);
+        return {
+            avg: sum / values.length,
+            count: values.length
+        };
+    }
+
+    // 백분위 계산 함수 (값보다 작은 항목의 비율)
+    function calculatePercentile(value, sortedValues) {
+        if (!sortedValues || sortedValues.length === 0) return 50;
+        let count = 0;
+        for (const v of sortedValues) {
+            if (v < value) count++;
+            else break;
+        }
+        return (count / sortedValues.length) * 100;
+    }
+
+    // 사용자 순위 업데이트 함수
+    function updateUserPosition(filtered) {
+        if (userLight === null) return; // 사용자 데이터 없음
+
+        const lightValues = filtered.map(p => p.maxLight).filter(v => v > 0).sort((a, b) => a - b);
+        const triumphValues = filtered.map(p => p.triumphScore).filter(v => v > 0).sort((a, b) => a - b);
+        const playtimeValues = filtered.map(p => p.playTimeHours).filter(v => v > 0).sort((a, b) => a - b);
+
+        const lightPct = calculatePercentile(userLight, lightValues);
+        const triumphPct = calculatePercentile(userTriumph, triumphValues);
+        const playtimePct = calculatePercentile(userPlaytime, playtimeValues);
+
+        const lightTop = Math.round(100 - lightPct);
+        const triumphTop = Math.round(100 - triumphPct);
+        const playtimeTop = Math.round(100 - playtimePct);
+
+        // 순위 배지 업데이트
+        const badges = document.querySelectorAll('.position-badge');
+        if (badges.length >= 3) {
+            updateBadge(badges[0], lightTop);
+            updateBadge(badges[1], triumphTop);
+            updateBadge(badges[2], playtimeTop);
+        }
+    }
+
+    function updateBadge(badge, topPercent) {
+        const valueEl = badge.querySelector('.badge-value');
+        if (!valueEl) return;
+
+        valueEl.textContent = `Top ${topPercent}%`;
+        valueEl.className = 'badge-value';
+        if (topPercent <= 10) valueEl.classList.add('top-10');
+        else if (topPercent <= 25) valueEl.classList.add('top-25');
+        else if (topPercent <= 50) valueEl.classList.add('top-50');
+        else valueEl.classList.add('bottom-50');
+    }
+
+    // 차트 생성/업데이트 함수
+    function createOrUpdateChart(chartInstance, canvasId, data, userValue, baseColor, highlightColor, bucketSize) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return null;
+
+        const labels = Object.keys(data);
+        const values = Object.values(data);
+
+        // 사용자 위치 찾기
+        let userIndex = -1;
+        if (userValue !== null) {
+            for (let i = 0; i < labels.length; i++) {
+                const bucketStart = parseInt(labels[i]);
+                const bucketEnd = bucketStart + bucketSize;
+                if (userValue >= bucketStart && userValue < bucketEnd) {
+                    userIndex = i;
+                    break;
+                }
+            }
+        }
+
+        const backgroundColors = labels.map((_, i) => i === userIndex ? highlightColor : baseColor);
+        const borderColors = labels.map((_, i) => i === userIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.1)');
+        const borderWidths = labels.map((_, i) => i === userIndex ? 3 : 1);
+
+        if (chartInstance) {
+            // 차트 업데이트
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = values;
+            chartInstance.data.datasets[0].backgroundColor = backgroundColors;
+            chartInstance.data.datasets[0].borderColor = borderColors;
+            chartInstance.data.datasets[0].borderWidth = borderWidths;
+            chartInstance.update('none');
+            return chartInstance;
+        } else {
+            // 새 차트 생성
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Players',
+                        data: values,
+                        backgroundColor: backgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: borderWidths,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 200 },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.parsed.y} players`,
+                                title: (ctx) => `${ctx[0].label}+`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxRotation: 45, minRotation: 45, font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { font: { size: 10 } }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // 필터 적용 및 UI 업데이트
+    function applyFilters() {
+        // 데이터 필터링 (null은 필터 없음)
+        const filtered = rawPlayerData.filter(p => {
+            const playTimeOk = (filters.minPlayTime === null || p.playTimeHours >= filters.minPlayTime) &&
+                               (filters.maxPlayTime === null || p.playTimeHours <= filters.maxPlayTime);
+            const powerOk = (filters.minPowerLevel === null || p.maxLight >= filters.minPowerLevel) &&
+                            (filters.maxPowerLevel === null || p.maxLight <= filters.maxPowerLevel);
+            const triumphOk = (filters.minTriumphScore === null || p.triumphScore >= filters.minTriumphScore) &&
+                              (filters.maxTriumphScore === null || p.triumphScore <= filters.maxTriumphScore);
+            return playTimeOk && powerOk && triumphOk;
+        });
+
+        // 필터된 데이터에서 통계 계산
+        const lightValues = filtered.map(p => p.maxLight).filter(v => v > 0);
+        const triumphValues = filtered.map(p => p.triumphScore).filter(v => v > 0);
+        const playtimeValues = filtered.map(p => p.playTimeHours).filter(v => v > 0);
+
+        // 클래스 분포 계산
+        let titanCount = 0, hunterCount = 0, warlockCount = 0;
+        filtered.forEach(p => {
+            p.characters.forEach(c => {
+                if (c.classType === 0) titanCount++;
+                else if (c.classType === 1) hunterCount++;
+                else if (c.classType === 2) warlockCount++;
+            });
+        });
+        const totalChars = titanCount + hunterCount + warlockCount;
+
+        // 통계 카드 업데이트
+        const lightStats = calculateStats(lightValues);
+        const triumphStats = calculateStats(triumphValues);
+        const playtimeStats = calculateStats(playtimeValues);
+
+        document.querySelector('.stat-card:nth-child(1) .stat-value').textContent = filtered.length;
+        document.querySelector('.stat-card:nth-child(2) .stat-value').textContent = Math.round(lightStats.avg);
+        document.querySelector('.stat-card:nth-child(3) .stat-value').textContent = Math.round(triumphStats.avg);
+        document.querySelector('.stat-card:nth-child(4) .stat-value').textContent = Math.round(playtimeStats.avg) + 'h';
+
+        // 클래스 분포 업데이트
+        if (totalChars > 0) {
+            const titanPct = (titanCount / totalChars * 100).toFixed(1);
+            const hunterPct = (hunterCount / totalChars * 100).toFixed(1);
+            const warlockPct = (warlockCount / totalChars * 100).toFixed(1);
+
+            document.querySelector('.bar-fill.titan').style.width = titanPct + '%';
+            document.querySelector('.bar-fill.hunter').style.width = hunterPct + '%';
+            document.querySelector('.bar-fill.warlock').style.width = warlockPct + '%';
+
+            document.querySelectorAll('.class-percent')[0].textContent = titanPct + '%';
+            document.querySelectorAll('.class-percent')[1].textContent = hunterPct + '%';
+            document.querySelectorAll('.class-percent')[2].textContent = warlockPct + '%';
+        }
+
+        // 분포 버킷 계산
+        const lightDist = calculateBuckets(lightValues, 10);
+        const triumphDist = calculateBuckets(triumphValues, 5000);
+        const playtimeDist = calculateBuckets(playtimeValues, 100);
+
+        // 차트 업데이트
+        lightChart = createOrUpdateChart(lightChart, 'lightChart', lightDist, userLight,
+            'rgba(33, 150, 243, 0.4)', 'rgba(33, 150, 243, 1)', 10);
+        triumphChart = createOrUpdateChart(triumphChart, 'triumphChart', triumphDist, userTriumph,
+            'rgba(156, 39, 176, 0.4)', 'rgba(156, 39, 176, 1)', 5000);
+        playtimeChart = createOrUpdateChart(playtimeChart, 'playtimeChart', playtimeDist, userPlaytime,
+            'rgba(76, 175, 80, 0.4)', 'rgba(76, 175, 80, 1)', 100);
+
+        // 필터 카운트 업데이트
+        document.getElementById('filteredCount').textContent = filtered.length;
+
+        // 사용자 순위 업데이트
+        updateUserPosition(filtered);
+    }
+
+    // 필터 토글
+    const filterToggle = document.getElementById('filterToggle');
+    const filterContent = document.getElementById('filterContent');
+    filterToggle.addEventListener('click', () => {
+        filterToggle.classList.toggle('open');
+        filterContent.classList.toggle('open');
+    });
+
+    // 텍스트 입력 이벤트 설정
+    function setupFilterInput(inputId, filterKey) {
+        const input = document.getElementById(inputId);
+        input.addEventListener('input', () => {
+            const val = input.value.trim();
+            filters[filterKey] = val === '' ? null : parseFloat(val);
+            applyFilters();
+        });
+    }
+
+    setupFilterInput('minPlayTime', 'minPlayTime');
+    setupFilterInput('maxPlayTime', 'maxPlayTime');
+    setupFilterInput('minPowerLevel', 'minPowerLevel');
+    setupFilterInput('maxPowerLevel', 'maxPowerLevel');
+    setupFilterInput('minTriumphScore', 'minTriumphScore');
+    setupFilterInput('maxTriumphScore', 'maxTriumphScore');
+
+    // 필터 리셋
+    document.getElementById('resetFilters').addEventListener('click', () => {
+        filters = {
+            minPlayTime: null, maxPlayTime: null,
+            minPowerLevel: null, maxPowerLevel: null,
+            minTriumphScore: null, maxTriumphScore: null
+        };
+        document.getElementById('minPlayTime').value = '';
+        document.getElementById('maxPlayTime').value = '';
+        document.getElementById('minPowerLevel').value = '';
+        document.getElementById('maxPowerLevel').value = '';
+        document.getElementById('minTriumphScore').value = '';
+        document.getElementById('maxTriumphScore').value = '';
+        applyFilters();
+    });
+
+    // 초기 차트 생성
+    applyFilters();
+});
+</script>
+{% endif %}
+{% endblock %}

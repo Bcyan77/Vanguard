@@ -308,11 +308,12 @@
 <body>
     <nav>
         <div class="container">
-            <a href="{% url 'home' %}" class="logo">⚡ VANGUARD</a>
+            <a href="{% url 'home' %}" class="logo">VANGUARD</a>
             <ul>
-                {% if user.is_authenticated %}
                 <li><a href="{% url 'fireteams:fireteam_list' %}">Fireteams</a></li>
                 <li><a href="{% url 'players:search' %}">Player Search</a></li>
+                <li><a href="{% url 'players:statistics' %}">Statistics</a></li>
+                {% if user.is_authenticated %}
                 <li><a href="{% url 'accounts:profile' %}">{{ user.display_name }}</a></li>
                 <li><a href="{% url 'accounts:logout' %}" class="btn btn-secondary">Logout</a></li>
                 {% else %}

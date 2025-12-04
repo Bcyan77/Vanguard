@@ -123,7 +123,17 @@
 {% block content %}
 <div class="profile-header">
     <div class="profile-avatar">
-        👤
+        {% if user.bungie_membership_type == 1 %}
+        <img src="https://www.bungie.net/img/theme/bungienet/icons/xboxLiveLogo.png" alt="Xbox" style="width: 60px; height: 60px;">
+        {% elif user.bungie_membership_type == 2 %}
+        <img src="https://www.bungie.net/img/theme/bungienet/icons/psnLogo.png" alt="PlayStation" style="width: 60px; height: 60px;">
+        {% elif user.bungie_membership_type == 3 %}
+        <img src="https://www.bungie.net/img/theme/bungienet/icons/steamLogo.png" alt="Steam" style="width: 60px; height: 60px;">
+        {% elif user.bungie_membership_type == 6 %}
+        <img src="https://www.bungie.net/img/theme/bungienet/icons/epicLogo.png" alt="Epic Games" style="width: 60px; height: 60px;">
+        {% else %}
+        <img src="https://www.bungie.net/img/theme/bungienet/icons/bunloginLogoColor.png" alt="Bungie" style="width: 60px; height: 60px;">
+        {% endif %}
     </div>
     <div class="profile-info">
         <h1>{{ user.display_name }}</h1>
@@ -139,7 +149,7 @@
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-value">{{ created_parties.count }}</div>
-        <div class="stat-label">Parties Created</div>
+        <div class="stat-label">Fireteams Created</div>
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ memberships.count }}</div>
@@ -151,11 +161,11 @@
     </div>
 </div>
 
-<h2 class="section-title">🎮 Your Parties</h2>
+<h2 class="section-title">Your Fireteams</h2>
 {% if created_parties %}
 <div class="party-list">
     {% for party in created_parties %}
-    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' party.pk %}'">
+    <div class="party-item" onclick="window.location.href='{% url 'fireteams:fireteam_detail' party.pk %}'">
         <div class="party-item-header">
             <div class="party-item-title">{{ party.title }}</div>
             <span class="party-status status-{{ party.status }}">{{ party.get_status_display }}</span>
@@ -170,16 +180,16 @@
 </div>
 {% else %}
 <div class="empty-message">
-    <p>You haven't created any parties yet.</p>
-    <a href="{% url 'parties:party_create' %}" class="btn" style="margin-top: 1rem;">Create Your First Party</a>
+    <p>You haven't created any fireteams yet.</p>
+    <a href="{% url 'fireteams:fireteam_create' %}" class="btn" style="margin-top: 1rem;">Create Your First Fireteam</a>
 </div>
 {% endif %}
 
-<h2 class="section-title" style="margin-top: 2rem;">👥 Active Memberships</h2>
+<h2 class="section-title" style="margin-top: 2rem;">Active Memberships</h2>
 {% if memberships %}
 <div class="party-list">
     {% for membership in memberships %}
-    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' membership.party.pk %}'">
+    <div class="party-item" onclick="window.location.href='{% url 'fireteams:fireteam_detail' membership.party.pk %}'">
         <div class="party-item-header">
             <div class="party-item-title">{{ membership.party.title }}</div>
             <span class="tag">{{ membership.get_role_display }}</span>
@@ -194,16 +204,16 @@
 </div>
 {% else %}
 <div class="empty-message">
-    <p>You're not a member of any parties.</p>
-    <a href="{% url 'parties:party_list' %}" class="btn" style="margin-top: 1rem;">Browse Parties</a>
+    <p>You're not a member of any fireteams.</p>
+    <a href="{% url 'fireteams:fireteam_list' %}" class="btn" style="margin-top: 1rem;">Browse Fireteams</a>
 </div>
 {% endif %}
 
 {% if pending_applications %}
-<h2 class="section-title" style="margin-top: 2rem;">⏳ Pending Applications</h2>
+<h2 class="section-title" style="margin-top: 2rem;">Pending Applications</h2>
 <div class="party-list">
     {% for application in pending_applications %}
-    <div class="party-item" onclick="window.location.href='{% url 'parties:party_detail' application.party.pk %}'">
+    <div class="party-item" onclick="window.location.href='{% url 'fireteams:fireteam_detail' application.party.pk %}'">
         <div class="party-item-header">
             <div class="party-item-title">{{ application.party.title }}</div>
             <span class="tag">Pending</span>

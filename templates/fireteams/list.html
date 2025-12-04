@@ -180,15 +180,7 @@
     }
 
     .search-box input {
-        padding-left: 2.5rem;
-    }
-
-    .search-icon {
-        position: absolute;
-        left: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #888;
+        padding-left: 0.75rem;
     }
 
     /* Modal Form Styles */
@@ -228,7 +220,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1>🎮 Find Your Fireteam</h1>
+    <h1>Find Your Fireteam</h1>
     {% if user.is_authenticated %}
         <button type="button" class="btn" id="openCreateModal">+ Create Fireteam</button>
     {% endif %}
@@ -238,7 +230,6 @@
     <form method="get" action="{% url 'fireteams:fireteam_list' %}">
         <div class="filter-row">
             <div class="search-box">
-                <span class="search-icon">🔍</span>
                 <input type="text" name="search" placeholder="Search fireteams..." value="{{ search_query|default:'' }}">
             </div>
             

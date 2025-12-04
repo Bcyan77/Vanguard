@@ -270,3 +270,87 @@ def get_activity_name(activity_hash):
         return activity.name
     except DestinySpecificActivity.DoesNotExist:
         return "Unknown Activity"
+
+
+def search_clans(name, page=0):
+    """
+    Search for clans by name.
+
+    Endpoint: POST /GroupV2/Search/
+
+    Args:
+        name: Clan name to search (partial match)
+        page: Page number for pagination
+
+    Returns:
+        tuple: (list of clan dicts, error message or None)
+    """
+    try:
+        data = {
+            'name': name,
+            'groupType': 1,  # Clan (Destiny 2)
+        }
+
+        response = make_public_api_request(
+            f'/GroupV2/Search/?currentpage={page}&itemsPerPage=25',
+            method='POST',
+            data=data
+        )
+
+        if response and response.get('results'):
+            results = []
+            for clan in response['results']:
+                results.append({
+                    'groupId': clan.get('groupId'),
+                    'name': clan.get('name'),
+                    'memberCount': clan.get('memberCount', 0),
+                    'motto': clan.get('motto', ''),
+                    'about': (clan.get('about', '') or '')[:100],
+                })
+            return results, None
+        return [], 'No clans found'
+
+    except Exception as e:
+        logger.error(f"Clan search failed: {e}")
+        return [], str(e)
+
+
+def get_clan_members(group_id, page=1):
+    """
+    Get members of a clan by group ID.
+
+    Endpoint: GET /GroupV2/{groupId}/Members/
+
+    Args:
+        group_id: Bungie clan group ID
+        page: Page number (1-indexed, 100 members per page)
+
+    Returns:
+        tuple: (list of member dicts, has_more, error message or None)
+    """
+    try:
+        response = make_public_api_request(
+            f'/GroupV2/{group_id}/Members/?currentpage={page}'
+        )
+
+        if response and response.get('results'):
+            members = []
+            for member_data in response['results']:
+                destiny_info = member_data.get('destinyUserInfo', {})
+                if destiny_info.get('membershipId'):
+                    members.append({
+                        'membershipId': destiny_info.get('membershipId'),
+                        'membershipType': destiny_info.get('membershipType'),
+                        'displayName': destiny_info.get('displayName'),
+                        'bungieGlobalDisplayName': destiny_info.get('bungieGlobalDisplayName'),
+                        'bungieGlobalDisplayNameCode': destiny_info.get('bungieGlobalDisplayNameCode'),
+                    })
+
+            has_more = response.get('hasMore', False)
+            return members, has_more, None
+
+        return [], False, 'Failed to get clan members'
+
+    except Exception as e:
+        logger.error(f"Get clan members failed: {e}")
+        return [], False, str(e)
