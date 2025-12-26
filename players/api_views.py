@@ -26,6 +26,7 @@ from .services import (
     calculate_badges,
     get_radar_chart_data,
     get_user_rank_in_leaderboard,
+    get_filtered_player_count,
     BADGES,
 )
 from .models import DestinyPlayer
@@ -449,4 +450,52 @@ class BadgesAPIView(APIView):
     def get(self, request):
         return Response({
             'badges': list(BADGES.values()),
+        })
+
+
+class StatisticsFilteredCountAPIView(APIView):
+    """
+    필터링된 플레이어 카운트 API - 전체 공개 (인증 불필요)
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get filtered player count",
+        description="Get the count of players matching the specified filters (min playtime, min light level).",
+        parameters=[
+            OpenApiParameter(
+                name='min_playtime',
+                type=float,
+                required=False,
+                description='Minimum playtime in hours (default: 0)'
+            ),
+            OpenApiParameter(
+                name='min_light',
+                type=int,
+                required=False,
+                description='Minimum light level (default: 0)'
+            ),
+        ],
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        try:
+            min_playtime = float(request.GET.get('min_playtime', 0))
+        except (ValueError, TypeError):
+            min_playtime = 0
+
+        try:
+            min_light = int(request.GET.get('min_light', 0))
+        except (ValueError, TypeError):
+            min_light = 0
+
+        result = get_filtered_player_count(min_playtime, min_light)
+
+        return Response({
+            **result,
+            'filters': {
+                'min_playtime_hours': min_playtime,
+                'min_light_level': min_light,
+            }
         })

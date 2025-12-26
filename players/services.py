@@ -871,3 +871,26 @@ def get_user_rank_in_leaderboard(user, category='light_level'):
             }
 
     return None
+
+
+def get_filtered_player_count(min_playtime_hours=0, min_light_level=0):
+    """
+    필터링된 플레이어 수 반환.
+
+    Args:
+        min_playtime_hours: 최소 플레이 시간 (시간)
+        min_light_level: 최소 라이트 레벨
+
+    Returns:
+        dict: {total_players, filtered_count}
+    """
+    raw_data = get_raw_player_data()
+    filtered = [
+        p for p in raw_data
+        if p['playTimeHours'] >= min_playtime_hours
+        and p['maxLight'] >= min_light_level
+    ]
+    return {
+        'total_players': len(raw_data),
+        'filtered_count': len(filtered),
+    }

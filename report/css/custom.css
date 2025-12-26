@@ -51,7 +51,7 @@ body {
 /* Progress Bar - Below Navigation */
 .progress-bar {
     position: fixed;
-    top: 55px;
+    top: 61px;
     left: 0;
     height: 3px;
     background: linear-gradient(90deg, var(--primary), var(--secondary));

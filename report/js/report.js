@@ -3,7 +3,15 @@
  * Interactive navigation and visualization
  */
 
+// Prevent browser's automatic scroll restoration on refresh
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Reset scroll position on page load
+    window.scrollTo(0, 0);
+
     // Initialize
     hljs.highlightAll();
 
@@ -406,11 +414,11 @@ document.addEventListener('DOMContentLoaded', function() {
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
             font: { color: '#888', size: 11 },
-            margin: { l: 60, r: 20, t: 40, b: 50 },
+            margin: { l: 60, r: 120, t: 40, b: 50 },
             xaxis: { title: 'Light Level', gridcolor: 'rgba(255,255,255,0.05)' },
             yaxis: { title: 'Triumph Score', gridcolor: 'rgba(255,255,255,0.05)' },
             showlegend: true,
-            legend: { x: 0, y: 1, bgcolor: 'rgba(0,0,0,0)' },
+            legend: { x: 1.02, y: 1, xanchor: 'left', yanchor: 'top', bgcolor: 'rgba(0,0,0,0)' },
             transition: { duration: 0 },
         }, { responsive: true, displayModeBar: false });
     }
@@ -493,16 +501,20 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Radar Chart Demo
+    // Radar Chart Demo - 백엔드 지원 5축 (중간값 더미 데이터)
     const radarChartCtx = document.getElementById('demoRadarChart');
     if (radarChartCtx) {
         new Chart(radarChartCtx, {
             type: 'radar',
             data: {
-                labels: ['Light Level', 'Triumph Score', 'Play Time', 'PvP K/D', 'Raid Clears'],
+                // 백엔드 get_radar_chart_data() 함수와 동일한 축
+                labels: ['Light Level', 'Triumph', 'Play Time', 'Characters', 'Versatility'],
                 datasets: [{
-                    label: 'Your Stats',
-                    data: [85, 72, 60, 45, 55],
+                    label: 'Sample Player',
+                    // 일반적인 플레이어 프로필을 대표하는 중간값 더미 데이터
+                    // Light Level: 65 (상위 35%), Triumph: 55 (중간), Play Time: 48 (평균 하회)
+                    // Characters: 66 (2개 보유), Versatility: 66 (2종 클래스)
+                    data: [65, 55, 48, 66, 66],
                     backgroundColor: 'rgba(255, 215, 0, 0.2)',
                     borderColor: 'rgba(255, 215, 0, 0.8)',
                     borderWidth: 2,
@@ -541,7 +553,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================
-    // FILTER DEMO
+    // FILTER DEMO (API 연동)
     // ============================================
 
     const demoMinPlaytime = document.getElementById('demoMinPlaytime');
@@ -550,10 +562,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const demoMinLightValue = document.getElementById('demoMinLightValue');
     const demoFilterCount = document.getElementById('demoFilterCount');
 
-    // Sample player count logic
-    const totalPlayers = 1250;
+    // API 기본 URL (동일 도메인이면 빈 문자열, 다른 도메인이면 전체 URL)
+    const API_BASE_URL = '';
 
-    function updateFilterDemo() {
+    // Debounce 유틸리티
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // 폴백용 변수 (API 실패 시 사용)
+    let fallbackTotalPlayers = 1250;
+    let useApiFallback = false;
+
+    // 폴백 로직 (기존 exponential decay 방식)
+    function updateFilterDemoFallback() {
         if (!demoMinPlaytime || !demoMinLight) return;
 
         const minPlaytime = parseInt(demoMinPlaytime.value);
@@ -562,20 +588,100 @@ document.addEventListener('DOMContentLoaded', function() {
         demoMinPlaytimeValue.textContent = minPlaytime + 'h';
         demoMinLightValue.textContent = minLight;
 
-        // Simulate filtering (exponential decay based on filters)
         const playtimeFactor = Math.max(0, 1 - minPlaytime / 600);
         const lightFactor = Math.max(0, 1 - (minLight - 1780) / 50);
-        const filtered = Math.round(totalPlayers * playtimeFactor * lightFactor);
+        const filtered = Math.round(fallbackTotalPlayers * playtimeFactor * lightFactor);
 
         demoFilterCount.textContent = filtered.toLocaleString();
     }
 
+    // API 호출 로직
+    async function fetchFilteredCount(minPlaytime, minLight) {
+        const url = `${API_BASE_URL}/api/statistics/filtered-count/?min_playtime=${minPlaytime}&min_light=${minLight}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('API request failed');
+        return response.json();
+    }
+
+    // 필터 업데이트 (debounced)
+    const updateFilterDemo = debounce(async () => {
+        if (!demoMinPlaytime || !demoMinLight) return;
+
+        const minPlaytime = parseInt(demoMinPlaytime.value);
+        const minLight = parseInt(demoMinLight.value);
+
+        // 즉시 UI 업데이트
+        demoMinPlaytimeValue.textContent = minPlaytime + 'h';
+        demoMinLightValue.textContent = minLight;
+
+        if (useApiFallback) {
+            // API 사용 불가 시 폴백 로직
+            updateFilterDemoFallback();
+            return;
+        }
+
+        try {
+            const result = await fetchFilteredCount(minPlaytime, minLight);
+            demoFilterCount.textContent = result.filtered_count.toLocaleString();
+        } catch (error) {
+            console.warn('Filter API call failed, using fallback:', error);
+            updateFilterDemoFallback();
+        }
+    }, 300);
+
+    // 필터 초기화 (API에서 통계 범위 가져오기)
+    async function initFilterDemo() {
+        if (!demoMinPlaytime || !demoMinLight) return;
+
+        try {
+            // 기술 통계 API에서 범위 정보 가져오기
+            const statsResponse = await fetch(`${API_BASE_URL}/api/statistics/descriptive/`);
+            if (!statsResponse.ok) throw new Error('Failed to fetch statistics');
+
+            const stats = await statsResponse.json();
+
+            // 라이트 레벨 슬라이더 범위 설정
+            const lightMin = stats.light_level.min || 1780;
+            const lightMax = stats.light_level.max || 1820;
+            demoMinLight.min = lightMin;
+            demoMinLight.max = lightMax;
+            demoMinLight.value = lightMin;
+            demoMinLightValue.textContent = lightMin;
+
+            // 플레이 타임 슬라이더 범위 설정 (Q3의 2배 또는 최대 1000시간)
+            const playtimeMax = Math.min(
+                Math.round((stats.play_time_hours.q3 || 250) * 2),
+                1000
+            );
+            demoMinPlaytime.max = playtimeMax;
+            demoMinPlaytime.value = 0;
+            demoMinPlaytimeValue.textContent = '0h';
+
+            // 총 플레이어 수 저장 (폴백용)
+            fallbackTotalPlayers = stats.metadata.total_players || 1250;
+
+            // 초기 카운트 로드
+            const initialResult = await fetchFilteredCount(0, lightMin);
+            demoFilterCount.textContent = initialResult.filtered_count.toLocaleString();
+
+        } catch (error) {
+            console.warn('Filter initialization failed, using fallback mode:', error);
+            useApiFallback = true;
+            // 기존 하드코딩된 범위 유지
+            updateFilterDemoFallback();
+        }
+    }
+
+    // 이벤트 리스너 등록
     if (demoMinPlaytime) {
         demoMinPlaytime.addEventListener('input', updateFilterDemo);
     }
     if (demoMinLight) {
         demoMinLight.addEventListener('input', updateFilterDemo);
     }
+
+    // 필터 초기화 실행
+    initFilterDemo();
 
     // ============================================
     // CODE COPY BUTTON
