@@ -27,6 +27,7 @@ from .services import (
     get_radar_chart_data,
     get_user_rank_in_leaderboard,
     get_filtered_player_count,
+    get_filtered_player_stats,
     BADGES,
 )
 from .models import DestinyPlayer
@@ -455,47 +456,69 @@ class BadgesAPIView(APIView):
 
 class StatisticsFilteredCountAPIView(APIView):
     """
-    필터링된 플레이어 카운트 API - 전체 공개 (인증 불필요)
+    필터링된 플레이어 통계 API - 전체 공개 (인증 불필요)
+    3개 필터(Play Time, Light Level, Triumph Score)와 평균 통계, 백분위 반환
     """
     permission_classes = [AllowAny]
 
     @extend_schema(
-        summary="Get filtered player count",
-        description="Get the count of players matching the specified filters (min playtime, min light level).",
+        summary="Get filtered player statistics",
+        description="Get the count and average statistics of players matching the specified filters.",
         parameters=[
-            OpenApiParameter(
-                name='min_playtime',
-                type=float,
-                required=False,
-                description='Minimum playtime in hours (default: 0)'
-            ),
-            OpenApiParameter(
-                name='min_light',
-                type=int,
-                required=False,
-                description='Minimum light level (default: 0)'
-            ),
+            OpenApiParameter(name='min_playtime', type=float, required=False, description='Minimum playtime in hours'),
+            OpenApiParameter(name='max_playtime', type=float, required=False, description='Maximum playtime in hours'),
+            OpenApiParameter(name='min_light', type=int, required=False, description='Minimum light level'),
+            OpenApiParameter(name='max_light', type=int, required=False, description='Maximum light level'),
+            OpenApiParameter(name='min_triumph', type=int, required=False, description='Minimum triumph score'),
+            OpenApiParameter(name='max_triumph', type=int, required=False, description='Maximum triumph score'),
         ],
         responses={200: dict},
         tags=['Statistics']
     )
     def get(self, request):
-        try:
-            min_playtime = float(request.GET.get('min_playtime', 0))
-        except (ValueError, TypeError):
-            min_playtime = 0
+        def parse_float(val):
+            if val is None or val == '':
+                return None
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                return None
 
-        try:
-            min_light = int(request.GET.get('min_light', 0))
-        except (ValueError, TypeError):
-            min_light = 0
+        def parse_int(val):
+            if val is None or val == '':
+                return None
+            try:
+                return int(val)
+            except (ValueError, TypeError):
+                return None
 
-        result = get_filtered_player_count(min_playtime, min_light)
+        min_playtime = parse_float(request.GET.get('min_playtime'))
+        max_playtime = parse_float(request.GET.get('max_playtime'))
+        min_light = parse_int(request.GET.get('min_light'))
+        max_light = parse_int(request.GET.get('max_light'))
+        min_triumph = parse_int(request.GET.get('min_triumph'))
+        max_triumph = parse_int(request.GET.get('max_triumph'))
+
+        result = get_filtered_player_stats(
+            min_playtime_hours=min_playtime,
+            max_playtime_hours=max_playtime,
+            min_light_level=min_light,
+            max_light_level=max_light,
+            min_triumph_score=min_triumph,
+            max_triumph_score=max_triumph,
+        )
 
         return Response({
-            **result,
+            'total_players': result['total_players'],
+            'filtered_count': result['filtered_count'],
+            'avg_stats': result['avg_stats'],
+            'percentiles': result['percentiles'],
             'filters': {
                 'min_playtime_hours': min_playtime,
+                'max_playtime_hours': max_playtime,
                 'min_light_level': min_light,
+                'max_light_level': max_light,
+                'min_triumph_score': min_triumph,
+                'max_triumph_score': max_triumph,
             }
         })

@@ -1194,7 +1194,7 @@ def class_light_level_anova() -> dict:
 
             <div class="section-content">
                 <div class="content-intro">
-                    <p>처리된 데이터는 <strong>Chart.js</strong>와 <strong>Plotly</strong>를 통해 인터랙티브 차트로 시각화됩니다. 각 라이브러리는 고유한 강점을 가지고 있습니다.</p>
+                    <p>처리된 데이터는 <strong>Chart.js</strong>와 <strong>Plotly</strong>를 통해 인터랙티브 차트로 시각화됩니다.</p>
                 </div>
 
                 <!-- Library Comparison -->
@@ -1471,33 +1471,48 @@ fetch('/api/statistics/class-comparison/')
                 <!-- Interactive Filter Demo -->
                 <div class="content-block">
                     <h3>인터랙티브 필터링</h3>
+                    <p class="filter-description">실제 서비스와 동일한 필터링 시스템입니다. 조건에 맞는 플레이어 수와 해당 플레이어들의 평균 프로필이 레이더 차트에 실시간으로 반영됩니다.</p>
                     <div class="filter-demo">
-                        <div class="filter-controls">
-                            <div class="filter-group">
-                                <label>Min Play Time (hours)</label>
-                                <input type="range" id="demoMinPlaytime" min="0" max="500" value="0">
-                                <span class="filter-value" id="demoMinPlaytimeValue">0h</span>
+                        <div class="filter-controls-grid">
+                            <div class="filter-item">
+                                <label>Play Time (hours)</label>
+                                <div class="filter-input-group">
+                                    <input type="number" id="demoMinPlaytime" min="0" value="" placeholder="0">
+                                    <span class="filter-separator">~</span>
+                                    <input type="number" id="demoMaxPlaytime" min="0" value="" placeholder="max">
+                                </div>
                             </div>
-                            <div class="filter-group">
-                                <label>Min Light Level</label>
-                                <input type="range" id="demoMinLight" min="1780" max="1820" value="1780">
-                                <span class="filter-value" id="demoMinLightValue">1780</span>
+                            <div class="filter-item">
+                                <label>Light Level</label>
+                                <div class="filter-input-group">
+                                    <input type="number" id="demoMinLight" min="0" value="" placeholder="0">
+                                    <span class="filter-separator">~</span>
+                                    <input type="number" id="demoMaxLight" min="0" value="" placeholder="max">
+                                </div>
+                            </div>
+                            <div class="filter-item">
+                                <label>Triumph Score</label>
+                                <div class="filter-input-group">
+                                    <input type="number" id="demoMinTriumph" min="0" value="" placeholder="0">
+                                    <span class="filter-separator">~</span>
+                                    <input type="number" id="demoMaxTriumph" min="0" value="" placeholder="max">
+                                </div>
                             </div>
                         </div>
                         <div class="filter-result">
                             <span class="result-label">Matching Players:</span>
-                            <span class="result-value" id="demoFilterCount">1,250</span>
+                            <span class="result-value" id="demoFilterCount">-</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- User Radar Chart -->
+                <!-- User Radar Chart - Dynamic based on filter -->
                 <div class="content-block">
-                    <h3>사용자 프로필 레이더 차트</h3>
+                    <h3>필터된 플레이어 평균 프로필</h3>
                     <div class="chart-demo-container small">
                         <canvas id="demoRadarChart"></canvas>
                     </div>
-                    <p class="chart-description">사용자의 다양한 지표를 한눈에 비교할 수 있는 레이더 차트. 각 축은 0-100 범위로 정규화되어 있습니다.</p>
+                    <p class="chart-description">위 필터 조건에 맞는 플레이어들의 평균 프로필입니다. 각 축은 0-100 범위로 정규화되어 있습니다.</p>
                 </div>
 
                 <!-- Section Navigation -->

@@ -1491,6 +1491,12 @@
 }
 
 /* ========== FILTER DEMO ========== */
+.filter-description {
+    color: var(--text-light);
+    font-size: 0.9em;
+    margin-bottom: 1rem;
+}
+
 .filter-demo {
     background: var(--bg-card);
     border-radius: 12px;
@@ -1498,6 +1504,72 @@
     border: 1px solid var(--border);
 }
 
+.filter-controls-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 900px) {
+    .filter-controls-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .filter-controls-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-item label {
+    font-size: 0.8em;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.filter-input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-input-group input[type="number"] {
+    width: 80px;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.9rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.filter-input-group input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1), 0 0 12px rgba(255, 215, 0, 0.15);
+}
+
+.filter-input-group input[type="number"]::placeholder {
+    color: #666;
+}
+
+.filter-separator {
+    color: var(--text-light);
+    font-size: 0.9em;
+}
+
+/* Legacy range slider styles (kept for backward compatibility) */
 .filter-controls {
     display: grid;
     grid-template-columns: 1fr 1fr;

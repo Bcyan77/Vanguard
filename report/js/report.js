@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update floating index
     function updateFloatingIndex() {
+        if (!floatingIndex) return;
         floatingIndex.querySelectorAll('a').forEach(link => {
             link.classList.remove('active');
             if (link.dataset.section === currentSection) {
@@ -159,15 +160,19 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Event: Floating index
-    floatingIndex.querySelectorAll('a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            navigateTo(link.dataset.section);
+    if (floatingIndex) {
+        floatingIndex.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo(link.dataset.section);
+            });
         });
-    });
+    }
 
     // Event: Hub button
-    hubBtn.addEventListener('click', () => navigateTo('hub'));
+    if (hubBtn) {
+        hubBtn.addEventListener('click', () => navigateTo('hub'));
+    }
 
     // Event: Back to hub buttons
     document.querySelectorAll('.back-to-hub').forEach(btn => {
@@ -205,7 +210,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function drawHubConnections() {
         const svg = document.querySelector('.hub-connections');
+        if (!svg) return; // Guard clause
         const linesGroup = svg.querySelector('.connection-lines');
+        if (!linesGroup) return; // Guard clause
         const center = { x: 200, y: 200 };
 
         // Node positions matching CSS layout (400x400 container)
@@ -501,71 +508,29 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Radar Chart Demo - 백엔드 지원 5축 (중간값 더미 데이터)
-    const radarChartCtx = document.getElementById('demoRadarChart');
-    if (radarChartCtx) {
-        new Chart(radarChartCtx, {
-            type: 'radar',
-            data: {
-                // 백엔드 get_radar_chart_data() 함수와 동일한 축
-                labels: ['Light Level', 'Triumph', 'Play Time', 'Characters', 'Versatility'],
-                datasets: [{
-                    label: 'Sample Player',
-                    // 일반적인 플레이어 프로필을 대표하는 중간값 더미 데이터
-                    // Light Level: 65 (상위 35%), Triumph: 55 (중간), Play Time: 48 (평균 하회)
-                    // Characters: 66 (2개 보유), Versatility: 66 (2종 클래스)
-                    data: [65, 55, 48, 66, 66],
-                    backgroundColor: 'rgba(255, 215, 0, 0.2)',
-                    borderColor: 'rgba(255, 215, 0, 0.8)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#FFD700',
-                    pointBorderColor: '#fff',
-                    pointRadius: 4,
-                }]
-            },
-            options: {
-                animation: false,
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 20,
-                            color: '#888',
-                            backdropColor: 'transparent',
-                            font: { size: 9 },
-                        },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
-                        pointLabels: {
-                            color: '#b0b0b0',
-                            font: { size: 10 },
-                        },
-                    },
-                },
-                plugins: {
-                    legend: { display: false },
-                },
-            },
-        });
-    }
-
     // ============================================
-    // FILTER DEMO (API 연동)
+    // INTERACTIVE FILTER + DYNAMIC RADAR CHART
     // ============================================
 
-    const demoMinPlaytime = document.getElementById('demoMinPlaytime');
-    const demoMinLight = document.getElementById('demoMinLight');
-    const demoMinPlaytimeValue = document.getElementById('demoMinPlaytimeValue');
-    const demoMinLightValue = document.getElementById('demoMinLightValue');
-    const demoFilterCount = document.getElementById('demoFilterCount');
-
-    // API 기본 URL (동일 도메인이면 빈 문자열, 다른 도메인이면 전체 URL)
+    // API 기본 URL (동일 도메인이면 빈 문자열)
     const API_BASE_URL = '';
 
-    // Debounce 유틸리티
+    // Filter input elements
+    const filterInputs = {
+        minPlaytime: document.getElementById('demoMinPlaytime'),
+        maxPlaytime: document.getElementById('demoMaxPlaytime'),
+        minLight: document.getElementById('demoMinLight'),
+        maxLight: document.getElementById('demoMaxLight'),
+        minTriumph: document.getElementById('demoMinTriumph'),
+        maxTriumph: document.getElementById('demoMaxTriumph'),
+    };
+    const demoFilterCount = document.getElementById('demoFilterCount');
+    const radarChartCtx = document.getElementById('demoRadarChart');
+
+    // Radar chart instance (will be created dynamically)
+    let radarChart = null;
+
+    // Debounce utility
     function debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -574,114 +539,180 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
 
-    // 폴백용 변수 (API 실패 시 사용)
-    let fallbackTotalPlayers = 1250;
-    let useApiFallback = false;
+    // Create or update radar chart
+    function updateRadarChart(percentiles) {
+        if (!radarChartCtx) return;
 
-    // 폴백 로직 (기존 exponential decay 방식)
-    function updateFilterDemoFallback() {
-        if (!demoMinPlaytime || !demoMinLight) return;
+        const data = percentiles ? [
+            percentiles.light_level,
+            percentiles.triumph,
+            percentiles.play_time,
+            percentiles.characters,
+            percentiles.versatility
+        ] : [50, 50, 50, 50, 50]; // Default center values
 
-        const minPlaytime = parseInt(demoMinPlaytime.value);
-        const minLight = parseInt(demoMinLight.value);
-
-        demoMinPlaytimeValue.textContent = minPlaytime + 'h';
-        demoMinLightValue.textContent = minLight;
-
-        const playtimeFactor = Math.max(0, 1 - minPlaytime / 600);
-        const lightFactor = Math.max(0, 1 - (minLight - 1780) / 50);
-        const filtered = Math.round(fallbackTotalPlayers * playtimeFactor * lightFactor);
-
-        demoFilterCount.textContent = filtered.toLocaleString();
+        if (radarChart) {
+            // Update existing chart
+            radarChart.data.datasets[0].data = data;
+            radarChart.update('none');
+        } else {
+            // Create new chart
+            radarChart = new Chart(radarChartCtx, {
+                type: 'radar',
+                data: {
+                    labels: ['Light Level', 'Triumph', 'Play Time', 'Characters', 'Versatility'],
+                    datasets: [{
+                        label: 'Filtered Average',
+                        data: data,
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        borderColor: 'rgba(255, 215, 0, 0.8)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#FFD700',
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                    }]
+                },
+                options: {
+                    animation: { duration: 300 },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                color: '#888',
+                                backdropColor: 'transparent',
+                                font: { size: 9 },
+                            },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                            angleLines: { color: 'rgba(255, 255, 255, 0.1)' },
+                            pointLabels: {
+                                color: '#b0b0b0',
+                                font: { size: 10 },
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                    },
+                },
+            });
+        }
     }
 
-    // API 호출 로직
-    async function fetchFilteredCount(minPlaytime, minLight) {
-        const url = `${API_BASE_URL}/api/statistics/filtered-count/?min_playtime=${minPlaytime}&min_light=${minLight}`;
+    // Get filter values from inputs
+    function getFilterValues() {
+        const getValue = (input) => {
+            if (!input || input.value === '') return null;
+            const val = parseFloat(input.value);
+            return isNaN(val) ? null : val;
+        };
+
+        return {
+            minPlaytime: getValue(filterInputs.minPlaytime),
+            maxPlaytime: getValue(filterInputs.maxPlaytime),
+            minLight: getValue(filterInputs.minLight),
+            maxLight: getValue(filterInputs.maxLight),
+            minTriumph: getValue(filterInputs.minTriumph),
+            maxTriumph: getValue(filterInputs.maxTriumph),
+        };
+    }
+
+    // Build API query string
+    function buildQueryString(filters) {
+        const params = new URLSearchParams();
+        if (filters.minPlaytime !== null) params.append('min_playtime', filters.minPlaytime);
+        if (filters.maxPlaytime !== null) params.append('max_playtime', filters.maxPlaytime);
+        if (filters.minLight !== null) params.append('min_light', filters.minLight);
+        if (filters.maxLight !== null) params.append('max_light', filters.maxLight);
+        if (filters.minTriumph !== null) params.append('min_triumph', filters.minTriumph);
+        if (filters.maxTriumph !== null) params.append('max_triumph', filters.maxTriumph);
+        return params.toString();
+    }
+
+    // Fetch filtered statistics from API
+    async function fetchFilteredStats(filters) {
+        const queryString = buildQueryString(filters);
+        const url = `${API_BASE_URL}/api/statistics/filtered-count/${queryString ? '?' + queryString : ''}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('API request failed');
         return response.json();
     }
 
-    // 필터 업데이트 (debounced)
+    // Fallback data for filter demo when API is unavailable
+    const filterFallbackData = {
+        totalPlayers: 1250,
+        percentiles: { light_level: 50, triumph: 50, play_time: 50, characters: 66, versatility: 66 }
+    };
+
+    // Update filter demo (debounced)
     const updateFilterDemo = debounce(async () => {
-        if (!demoMinPlaytime || !demoMinLight) return;
+        if (!demoFilterCount) return;
 
-        const minPlaytime = parseInt(demoMinPlaytime.value);
-        const minLight = parseInt(demoMinLight.value);
-
-        // 즉시 UI 업데이트
-        demoMinPlaytimeValue.textContent = minPlaytime + 'h';
-        demoMinLightValue.textContent = minLight;
-
-        if (useApiFallback) {
-            // API 사용 불가 시 폴백 로직
-            updateFilterDemoFallback();
-            return;
-        }
+        const filters = getFilterValues();
 
         try {
-            const result = await fetchFilteredCount(minPlaytime, minLight);
+            const result = await fetchFilteredStats(filters);
+
+            // Update count
             demoFilterCount.textContent = result.filtered_count.toLocaleString();
+
+            // Update radar chart with percentiles
+            if (result.percentiles) {
+                updateRadarChart(result.percentiles);
+            } else {
+                // No matching players - show empty/center chart
+                updateRadarChart(null);
+            }
         } catch (error) {
-            console.warn('Filter API call failed, using fallback:', error);
-            updateFilterDemoFallback();
+            console.warn('Filter API call failed:', error);
+            // Use fallback
+            demoFilterCount.textContent = filterFallbackData.totalPlayers.toLocaleString();
+            updateRadarChart(filterFallbackData.percentiles);
         }
     }, 300);
 
-    // 필터 초기화 (API에서 통계 범위 가져오기)
+    // Initialize filter demo
     async function initFilterDemo() {
-        if (!demoMinPlaytime || !demoMinLight) return;
-
         try {
-            // 기술 통계 API에서 범위 정보 가져오기
-            const statsResponse = await fetch(`${API_BASE_URL}/api/statistics/descriptive/`);
-            if (!statsResponse.ok) throw new Error('Failed to fetch statistics');
+            // Check if filter elements exist
+            const hasFilterInputs = Object.values(filterInputs).some(input => input !== null);
+            if (!hasFilterInputs && !demoFilterCount) return;
 
-            const stats = await statsResponse.json();
+            // Initialize radar chart with default data
+            updateRadarChart(filterFallbackData.percentiles);
 
-            // 라이트 레벨 슬라이더 범위 설정
-            const lightMin = stats.light_level.min || 1780;
-            const lightMax = stats.light_level.max || 1820;
-            demoMinLight.min = lightMin;
-            demoMinLight.max = lightMax;
-            demoMinLight.value = lightMin;
-            demoMinLightValue.textContent = lightMin;
+            // Load initial data
+            try {
+                const result = await fetchFilteredStats({});
+                if (demoFilterCount) {
+                    demoFilterCount.textContent = result.filtered_count.toLocaleString();
+                }
+                if (result.percentiles) {
+                    updateRadarChart(result.percentiles);
+                }
+            } catch (error) {
+                console.warn('Initial filter load failed:', error);
+                if (demoFilterCount) {
+                    demoFilterCount.textContent = filterFallbackData.totalPlayers.toLocaleString();
+                }
+            }
 
-            // 플레이 타임 슬라이더 범위 설정 (Q3의 2배 또는 최대 1000시간)
-            const playtimeMax = Math.min(
-                Math.round((stats.play_time_hours.q3 || 250) * 2),
-                1000
-            );
-            demoMinPlaytime.max = playtimeMax;
-            demoMinPlaytime.value = 0;
-            demoMinPlaytimeValue.textContent = '0h';
-
-            // 총 플레이어 수 저장 (폴백용)
-            fallbackTotalPlayers = stats.metadata.total_players || 1250;
-
-            // 초기 카운트 로드
-            const initialResult = await fetchFilteredCount(0, lightMin);
-            demoFilterCount.textContent = initialResult.filtered_count.toLocaleString();
-
+            // Add event listeners to all filter inputs
+            Object.values(filterInputs).forEach(input => {
+                if (input) {
+                    input.addEventListener('input', updateFilterDemo);
+                }
+            });
         } catch (error) {
-            console.warn('Filter initialization failed, using fallback mode:', error);
-            useApiFallback = true;
-            // 기존 하드코딩된 범위 유지
-            updateFilterDemoFallback();
+            console.error('Filter demo initialization error:', error);
         }
     }
 
-    // 이벤트 리스너 등록
-    if (demoMinPlaytime) {
-        demoMinPlaytime.addEventListener('input', updateFilterDemo);
-    }
-    if (demoMinLight) {
-        demoMinLight.addEventListener('input', updateFilterDemo);
-    }
-
-    // 필터 초기화 실행
-    initFilterDemo();
+    // Initialize filter demo (non-blocking)
+    initFilterDemo().catch(err => console.error('initFilterDemo error:', err));
 
     // ============================================
     // CODE COPY BUTTON

@@ -873,24 +873,125 @@ def get_user_rank_in_leaderboard(user, category='light_level'):
     return None
 
 
-def get_filtered_player_count(min_playtime_hours=0, min_light_level=0):
+def get_filtered_player_stats(
+    min_playtime_hours=None, max_playtime_hours=None,
+    min_light_level=None, max_light_level=None,
+    min_triumph_score=None, max_triumph_score=None
+):
     """
-    필터링된 플레이어 수 반환.
+    필터링된 플레이어 통계 반환.
 
     Args:
         min_playtime_hours: 최소 플레이 시간 (시간)
+        max_playtime_hours: 최대 플레이 시간 (시간)
         min_light_level: 최소 라이트 레벨
+        max_light_level: 최대 라이트 레벨
+        min_triumph_score: 최소 트라이엄프 점수
+        max_triumph_score: 최대 트라이엄프 점수
 
     Returns:
-        dict: {total_players, filtered_count}
+        dict: {total_players, filtered_count, avg_stats, percentiles}
     """
     raw_data = get_raw_player_data()
-    filtered = [
-        p for p in raw_data
-        if p['playTimeHours'] >= min_playtime_hours
-        and p['maxLight'] >= min_light_level
-    ]
+
+    # 필터 적용
+    filtered = []
+    for p in raw_data:
+        # Play Time 필터
+        if min_playtime_hours is not None and p['playTimeHours'] < min_playtime_hours:
+            continue
+        if max_playtime_hours is not None and p['playTimeHours'] > max_playtime_hours:
+            continue
+
+        # Light Level 필터
+        if min_light_level is not None and p['maxLight'] < min_light_level:
+            continue
+        if max_light_level is not None and p['maxLight'] > max_light_level:
+            continue
+
+        # Triumph Score 필터
+        if min_triumph_score is not None and p['triumphScore'] < min_triumph_score:
+            continue
+        if max_triumph_score is not None and p['triumphScore'] > max_triumph_score:
+            continue
+
+        filtered.append(p)
+
+    total_players = len(raw_data)
+    filtered_count = len(filtered)
+
+    # 평균 통계 계산
+    if filtered_count > 0:
+        avg_light = sum(p['maxLight'] for p in filtered) / filtered_count
+        avg_triumph = sum(p['triumphScore'] for p in filtered) / filtered_count
+        avg_playtime = sum(p['playTimeHours'] for p in filtered) / filtered_count
+
+        # 캐릭터 수 평균
+        avg_characters = sum(len(p['characters']) for p in filtered) / filtered_count
+
+        # 클래스 다양성 평균 (플레이어당 몇 종류의 클래스를 가지고 있는지)
+        def get_class_diversity(p):
+            class_types = set(c['classType'] for c in p['characters'])
+            return len(class_types)
+
+        avg_versatility = sum(get_class_diversity(p) for p in filtered) / filtered_count
+
+        # 전체 통계 가져오기
+        try:
+            cache = GlobalStatisticsCache.objects.get(pk=1)
+        except GlobalStatisticsCache.DoesNotExist:
+            cache = refresh_global_statistics()
+
+        # 백분위 계산 (0-100 스케일)
+        light_z = calculate_z_score(avg_light, cache.avg_light_level, cache.stddev_light_level)
+        triumph_z = calculate_z_score(avg_triumph, cache.avg_triumph_score, cache.stddev_triumph_score)
+        playtime_z = calculate_z_score(avg_playtime, cache.avg_play_time_hours, cache.stddev_play_time_hours)
+
+        light_pct = min(100, max(0, calculate_percentile_from_zscore(light_z)))
+        triumph_pct = min(100, max(0, calculate_percentile_from_zscore(triumph_z)))
+        playtime_pct = min(100, max(0, calculate_percentile_from_zscore(playtime_z)))
+
+        # 캐릭터 수와 다양성은 1-3 기준으로 0-100 스케일 변환
+        char_pct = min(100, (avg_characters / 3) * 100)
+        versatility_pct = min(100, (avg_versatility / 3) * 100)
+
+        avg_stats = {
+            'light_level': round(avg_light, 1),
+            'triumph_score': round(avg_triumph, 1),
+            'play_time_hours': round(avg_playtime, 1),
+            'characters': round(avg_characters, 2),
+            'versatility': round(avg_versatility, 2),
+        }
+
+        percentiles = {
+            'light_level': round(light_pct, 1),
+            'triumph': round(triumph_pct, 1),
+            'play_time': round(playtime_pct, 1),
+            'characters': round(char_pct, 1),
+            'versatility': round(versatility_pct, 1),
+        }
+    else:
+        avg_stats = None
+        percentiles = None
+
     return {
-        'total_players': len(raw_data),
-        'filtered_count': len(filtered),
+        'total_players': total_players,
+        'filtered_count': filtered_count,
+        'avg_stats': avg_stats,
+        'percentiles': percentiles,
+    }
+
+
+# Legacy function for backward compatibility
+def get_filtered_player_count(min_playtime_hours=0, min_light_level=0):
+    """
+    필터링된 플레이어 수 반환 (하위 호환성 유지).
+    """
+    result = get_filtered_player_stats(
+        min_playtime_hours=min_playtime_hours if min_playtime_hours > 0 else None,
+        min_light_level=min_light_level if min_light_level > 0 else None
+    )
+    return {
+        'total_players': result['total_players'],
+        'filtered_count': result['filtered_count'],
     }
