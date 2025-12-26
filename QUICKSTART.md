@@ -138,6 +138,7 @@ After starting the server:
 - **API Docs**: `https://your-ngrok-url.ngrok.io/api/docs/`
 - **Admin Panel**: `https://your-ngrok-url.ngrok.io/admin/`
 - **Statistics**: `https://your-ngrok-url.ngrok.io/players/statistics/`
+- **Data Journey Report**: `https://your-ngrok-url.ngrok.io/report/` (Production only)
 
 ## GCP Production Deployment
 
@@ -150,23 +151,24 @@ After starting the server:
 
 ### Deploy Updates
 ```bash
-# SSH into server
-ssh vanguard-gcp
-
-# Pull latest code and restart
-cd ~/Vanguard
-git pull origin main
-sg docker -c 'docker-compose up -d --build'
+# SSH into server and run deploy script
+ssh vanguard-gcp "bash ~/Vanguard/scripts/deploy.sh"
 ```
 
-### One-liner Deploy
+### Manual Deploy (Alternative)
 ```bash
-ssh vanguard-gcp "cd ~/Vanguard && git pull origin main && sg docker -c 'docker-compose up -d --build'"
+ssh vanguard-gcp "cd ~/Vanguard && git pull origin main && sg docker -c 'docker-compose -f docker-compose.prod.yml up -d --build'"
 ```
+
+### Production URLs
+- **Main Site**: https://vanguard-lfg.com
+- **Data Journey Report**: https://vanguard-lfg.com/report/
+- **API Docs**: https://vanguard-lfg.com/api/docs/
+- **Statistics**: https://vanguard-lfg.com/players/statistics/
 
 ### View Logs
 ```bash
-ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose logs -f'"
+ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose -f docker-compose.prod.yml logs -f'"
 ```
 
 ### SSL Certificate

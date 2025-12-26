@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanguard - Data Journey Report</title>
+
+    <!-- Highlight.js for code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.2.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/custom.css">
+    <link rel="stylesheet" href="css/report.css">
+</head>
+<body>
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <!-- Navigation -->
+    <nav class="nav-bar">
+        <span class="nav-title" id="navTitle">Vanguard</span>
+        <div class="nav-breadcrumb" id="breadcrumb">
+            <span class="breadcrumb-item" data-section="hub">Data Journey</span>
+        </div>
+        <div class="nav-links-right">
+            <a href="https://vanguard-lfg.com/" target="_blank" class="nav-link-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                </svg>
+                <span>Live Service</span>
+            </a>
+            <a href="https://github.com/Bcyan77/Vanguard" target="_blank" class="nav-link-btn">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                </svg>
+                <span>GitHub</span>
+            </a>
+            <button class="nav-hub-btn" id="hubBtn" style="display: none;">
+                <span>Hub</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Floating Index Sidebar -->
+    <nav class="floating-index" id="floatingIndex">
+        <a href="#" data-section="hub" class="active">
+            <span class="index-label">Hub</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="sources">
+            <span class="index-label">Sources</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="collection">
+            <span class="index-label">Collection</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="storage">
+            <span class="index-label">Storage</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="processing">
+            <span class="index-label">Processing</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="visualization">
+            <span class="index-label">Visualization</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="ux">
+            <span class="index-label">UX</span>
+            <span class="index-dot"></span>
+        </a>
+        <a href="#" data-section="conclusion">
+            <span class="index-label">Conclusion</span>
+            <span class="index-dot"></span>
+        </a>
+    </nav>
+
+    <main class="container">
+        <!-- ========== HUB SECTION ========== -->
+        <section id="hub" class="hub-section active">
+            <header class="hub-header">
+                <p class="hub-category">Digital Archiving & Data Visualization</p>
+                <h1 class="hub-title">Data Journey</h1>
+                <p class="hub-subtitle">Destiny 2 Guardian Statistics Platform</p>
+            </header>
+
+            <div class="hub-intro">
+                <p>Vanguard는 Destiny 2 플레이어 데이터를 <strong>수집</strong>, <strong>저장</strong>, <strong>분석</strong>, <strong>시각화</strong>하는 플랫폼입니다.</p>
+                <p>아래 노드를 클릭하여 데이터 여정의 각 단계를 탐험하세요.</p>
+            </div>
+
+            <!-- Hub Visualization -->
+            <div class="hub-container">
+                <div class="hub-center">
+                    <div class="hub-core">
+                        <span class="hub-icon">◇</span>
+                        <span class="hub-core-text">DATA</span>
+                    </div>
+                </div>
+
+                <div class="hub-nodes">
+                    <!-- Node 1: Sources -->
+                    <div class="hub-node" data-section="sources" data-angle="0">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">Data Sources</span>
+                        <span class="node-desc">Bungie API</span>
+                    </div>
+
+                    <!-- Node 2: Collection -->
+                    <div class="hub-node" data-section="collection" data-angle="60">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">Collection</span>
+                        <span class="node-desc">OAuth & Sync</span>
+                    </div>
+
+                    <!-- Node 3: Storage -->
+                    <div class="hub-node" data-section="storage" data-angle="120">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2zm-4 7h20v-4H2v4zm2-3h2v2H4v-2z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">Storage</span>
+                        <span class="node-desc">Database</span>
+                    </div>
+
+                    <!-- Node 4: Processing -->
+                    <div class="hub-node" data-section="processing" data-angle="180">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">Processing</span>
+                        <span class="node-desc">Statistics</span>
+                    </div>
+
+                    <!-- Node 5: Visualization -->
+                    <div class="hub-node" data-section="visualization" data-angle="240">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">Visualization</span>
+                        <span class="node-desc">Charts</span>
+                    </div>
+
+                    <!-- Node 6: UX -->
+                    <div class="hub-node" data-section="ux" data-angle="300">
+                        <div class="node-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                            </svg>
+                        </div>
+                        <span class="node-title">User Experience</span>
+                        <span class="node-desc">Interaction</span>
+                    </div>
+                </div>
+
+                <!-- Connection Lines (SVG) -->
+                <svg class="hub-connections" viewBox="0 0 400 400">
+                    <defs>
+                        <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#ffd700;stop-opacity:0.6"/>
+                            <stop offset="50%" style="stop-color:#8ab4f8;stop-opacity:0.9"/>
+                            <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0.6"/>
+                        </linearGradient>
+                    </defs>
+                    <g class="connection-lines">
+                        <!-- Lines drawn by JS -->
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Progress Tracker -->
+            <div class="hub-progress">
+                <span class="progress-label">Exploration Progress</span>
+                <div class="progress-nodes">
+                    <span class="progress-dot" data-section="sources"></span>
+                    <span class="progress-dot" data-section="collection"></span>
+                    <span class="progress-dot" data-section="storage"></span>
+                    <span class="progress-dot" data-section="processing"></span>
+                    <span class="progress-dot" data-section="visualization"></span>
+                    <span class="progress-dot" data-section="ux"></span>
+                </div>
+                <span class="progress-count">0 / 6</span>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="hub-quick-links">
+                <button class="quick-link" data-section="conclusion">
+                    <span>Skip to Conclusion</span>
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- ========== SECTION A: DATA SOURCES ========== -->
+        <section id="sources" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">01</span>
+                    <h2>Data Sources</h2>
+                    <p class="section-subtitle">Where the Light Begins</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>모든 데이터는 <strong>Bungie API</strong>에서 시작됩니다. Bungie는 Destiny 2의 개발사로, 공식 API를 통해 플레이어 정보, 캐릭터 데이터, 활동 기록 등을 제공합니다.</p>
+                </div>
+
+                <!-- API Overview -->
+                <div class="content-block">
+                    <h3>Bungie API Overview</h3>
+                    <div class="api-info-grid">
+                        <div class="api-card">
+                            <div class="api-card-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                </svg>
+                            </div>
+                            <h4>OAuth 2.0</h4>
+                            <p>사용자 인증 및 토큰 기반 API 접근</p>
+                        </div>
+                        <div class="api-card">
+                            <div class="api-card-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                                </svg>
+                            </div>
+                            <h4>RESTful</h4>
+                            <p>표준 HTTP 메서드 기반 API 설계</p>
+                        </div>
+                        <div class="api-card">
+                            <div class="api-card-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                                </svg>
+                            </div>
+                            <h4>JSON</h4>
+                            <p>모든 응답은 JSON 형식으로 반환</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Endpoints -->
+                <div class="content-block">
+                    <h3>주요 API Endpoints</h3>
+                    <div class="endpoint-tree">
+                        <div class="endpoint-category">
+                            <div class="category-header" data-expanded="true">
+                                <span class="category-icon">▼</span>
+                                <span class="category-name">User & Authentication</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="endpoint-item">
+                                    <span class="method get">GET</span>
+                                    <code>/User/GetMembershipsForCurrentUser/</code>
+                                    <span class="endpoint-desc">현재 사용자의 멤버십 정보</span>
+                                </div>
+                                <div class="endpoint-item">
+                                    <span class="method post">POST</span>
+                                    <code>/App/OAuth/Token/</code>
+                                    <span class="endpoint-desc">액세스 토큰 발급/갱신</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="endpoint-category">
+                            <div class="category-header" data-expanded="true">
+                                <span class="category-icon">▼</span>
+                                <span class="category-name">Destiny 2 Profile</span>
+                            </div>
+                            <div class="category-items">
+                                <div class="endpoint-item">
+                                    <span class="method get">GET</span>
+                                    <code>/Destiny2/{membershipType}/Profile/{destinyMembershipId}/</code>
+                                    <span class="endpoint-desc">플레이어 프로필 전체 데이터</span>
+                                </div>
+                                <div class="endpoint-item">
+                                    <span class="method get">GET</span>
+                                    <code>/Destiny2/SearchDestinyPlayer/{membershipType}/{displayName}/</code>
+                                    <span class="endpoint-desc">플레이어 검색</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Types -->
+                <div class="content-block">
+                    <h3>수집 데이터 유형</h3>
+                    <div class="data-types-grid">
+                        <div class="data-type-card" data-type="player">
+                            <div class="type-header">
+                                <span class="type-icon player-icon">P</span>
+                                <h4>Player Data</h4>
+                            </div>
+                            <ul class="type-fields">
+                                <li><code>membershipId</code> - 고유 식별자</li>
+                                <li><code>displayName</code> - 표시 이름</li>
+                                <li><code>triumphScore</code> - 업적 점수</li>
+                            </ul>
+                        </div>
+                        <div class="data-type-card" data-type="character">
+                            <div class="type-header">
+                                <span class="type-icon character-icon">C</span>
+                                <h4>Character Data</h4>
+                            </div>
+                            <ul class="type-fields">
+                                <li><code>classType</code> - Titan/Hunter/Warlock</li>
+                                <li><code>light</code> - 전투력 레벨</li>
+                                <li><code>minutesPlayedTotal</code> - 플레이 시간</li>
+                            </ul>
+                        </div>
+                        <div class="data-type-card" data-type="activity">
+                            <div class="type-header">
+                                <span class="type-icon activity-icon">A</span>
+                                <h4>Activity Data</h4>
+                            </div>
+                            <ul class="type-fields">
+                                <li><code>activityHash</code> - 활동 식별자</li>
+                                <li><code>activityName</code> - 활동 이름</li>
+                                <li><code>activityMode</code> - 활동 유형</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sample Response -->
+                <div class="content-block">
+                    <h3>Sample API Response</h3>
+                    <div class="code-block-container">
+                        <div class="code-header">
+                            <span class="code-lang">JSON</span>
+                            <button class="code-copy-btn">Copy</button>
+                        </div>
+                        <pre><code class="language-json">{
+  "Response": {
+    "profile": {
+      "data": {
+        "userInfo": {
+          "membershipId": "4611686018467891234",
+          "displayName": "Guardian#1234",
+          "bungieGlobalDisplayName": "Guardian"
+        },
+        "activeScore": 52350,
+        "lifetimeScore": 78900
+      }
+    },
+    "characters": {
+      "data": {
+        "2305843009574891234": {
+          "classType": 0,
+          "light": 1810,
+          "minutesPlayedTotal": "34567"
+        }
+      }
+    }
+  },
+  "ErrorCode": 1,
+  "Message": "Ok"
+}</code></pre>
+                    </div>
+                </div>
+
+                <!-- Next Section -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="hub">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Hub</span>
+                    </button>
+                    <button class="nav-btn next" data-section="collection">
+                        <span>Collection</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECTION B: COLLECTION ========== -->
+        <section id="collection" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">02</span>
+                    <h2>Data Collection</h2>
+                    <p class="section-subtitle">Gathering the Light</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>데이터 수집은 <strong>OAuth 인증</strong>으로 시작됩니다. 사용자가 Bungie 계정으로 로그인하면, 안전하게 데이터에 접근할 수 있는 토큰을 받습니다.</p>
+                </div>
+
+                <!-- OAuth Flow -->
+                <div class="content-block">
+                    <h3>OAuth 2.0 인증 플로우</h3>
+                    <div class="oauth-flow-container">
+                        <div class="oauth-flow">
+                            <div class="oauth-step" data-step="1">
+                                <div class="step-number">1</div>
+                                <div class="step-content">
+                                    <h4>로그인 요청</h4>
+                                    <p>사용자가 "Bungie로 로그인" 클릭</p>
+                                </div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="oauth-step" data-step="2">
+                                <div class="step-number">2</div>
+                                <div class="step-content">
+                                    <h4>Bungie 인증</h4>
+                                    <p>Bungie.net에서 사용자 인증</p>
+                                </div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="oauth-step" data-step="3">
+                                <div class="step-number">3</div>
+                                <div class="step-content">
+                                    <h4>Authorization Code</h4>
+                                    <p>인증 코드와 함께 콜백</p>
+                                </div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="oauth-step" data-step="4">
+                                <div class="step-number">4</div>
+                                <div class="step-content">
+                                    <h4>Token Exchange</h4>
+                                    <p>코드를 Access Token으로 교환</p>
+                                </div>
+                                <div class="step-arrow">→</div>
+                            </div>
+                            <div class="oauth-step" data-step="5">
+                                <div class="step-number">5</div>
+                                <div class="step-content">
+                                    <h4>API Access</h4>
+                                    <p>토큰으로 데이터 요청</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Token Security -->
+                <div class="content-block">
+                    <h3>토큰 보안: Fernet 암호화</h3>
+                    <div class="two-column">
+                        <div class="column">
+                            <p>OAuth 토큰은 민감한 정보입니다. Vanguard는 <strong>Fernet 대칭키 암호화</strong>를 사용하여 토큰을 안전하게 저장합니다.</p>
+                            <ul>
+                                <li>Django <code>SECRET_KEY</code>에서 암호화 키 파생</li>
+                                <li>데이터베이스에 암호화된 토큰 저장</li>
+                                <li>API 호출 시 복호화하여 사용</li>
+                            </ul>
+                        </div>
+                        <div class="column">
+                            <div class="code-block-container">
+                                <div class="code-header">
+                                    <span class="code-lang">Python</span>
+                                </div>
+                                <pre><code class="language-python"># accounts/models.py
+class BungieUser(AbstractBaseUser):
+    _access_token = models.TextField(blank=True)
+
+    def set_access_token(self, token):
+        cipher = Fernet(get_encryption_key())
+        self._access_token = cipher.encrypt(
+            token.encode()
+        ).decode()
+
+    def get_access_token(self):
+        cipher = Fernet(get_encryption_key())
+        return cipher.decrypt(
+            self._access_token.encode()
+        ).decode()</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync Process -->
+                <div class="content-block">
+                    <h3>플레이어 데이터 동기화</h3>
+                    <div class="sync-pipeline">
+                        <div class="pipeline-stage">
+                            <div class="stage-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                                </svg>
+                            </div>
+                            <div class="stage-content">
+                                <h4>API Request</h4>
+                                <p>Bungie API 호출</p>
+                            </div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <div class="connector-line"></div>
+                            <div class="connector-arrow">→</div>
+                        </div>
+                        <div class="pipeline-stage">
+                            <div class="stage-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/>
+                                </svg>
+                            </div>
+                            <div class="stage-content">
+                                <h4>JSON Parse</h4>
+                                <p>응답 파싱 및 검증</p>
+                            </div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <div class="connector-line"></div>
+                            <div class="connector-arrow">→</div>
+                        </div>
+                        <div class="pipeline-stage">
+                            <div class="stage-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L12 14.17l4.59-4.58L18 11l-6 6z"/>
+                                </svg>
+                            </div>
+                            <div class="stage-content">
+                                <h4>Validation</h4>
+                                <p>데이터 유효성 검사</p>
+                            </div>
+                        </div>
+                        <div class="pipeline-connector">
+                            <div class="connector-line"></div>
+                            <div class="connector-arrow">→</div>
+                        </div>
+                        <div class="pipeline-stage">
+                            <div class="stage-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2zm4 3H4V5h2v2z"/>
+                                </svg>
+                            </div>
+                            <div class="stage-content">
+                                <h4>Database</h4>
+                                <p>update_or_create</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Example -->
+                <div class="content-block">
+                    <h3>동기화 서비스 구현</h3>
+                    <div class="code-block-container">
+                        <div class="code-header">
+                            <span class="code-lang">Python</span>
+                            <span class="code-file">players/services.py</span>
+                        </div>
+                        <pre><code class="language-python">def sync_player_from_api(membership_id, membership_type):
+    """Bungie API에서 플레이어 데이터를 가져와 동기화"""
+
+    # 1. API에서 프로필 데이터 조회
+    profile = bungie_api.get_player_profile(
+        membership_id,
+        membership_type
+    )
+
+    # 2. 플레이어 레코드 생성 또는 업데이트
+    player, created = DestinyPlayer.objects.update_or_create(
+        membership_id=membership_id,
+        membership_type=membership_type,
+        defaults={
+            'display_name': profile.get('displayName'),
+            'bungie_global_display_name': profile.get('bungieGlobalDisplayName'),
+            'active_triumph_score': profile.get('activeScore', 0),
+            'last_updated': timezone.now(),
+        }
+    )
+
+    # 3. 캐릭터 데이터 동기화
+    for char_id, char_data in profile.get('characters', {}).items():
+        sync_character(player, char_id, char_data)
+
+    return player</code></pre>
+                    </div>
+                </div>
+
+                <!-- Section Navigation -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="sources">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Sources</span>
+                    </button>
+                    <button class="nav-btn next" data-section="storage">
+                        <span>Storage</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECTION C: STORAGE ========== -->
+        <section id="storage" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">03</span>
+                    <h2>Data Storage</h2>
+                    <p class="section-subtitle">The Vault</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>수집된 데이터는 <strong>Django ORM</strong>을 통해 구조화되어 <strong>SQLite</strong> 데이터베이스에 저장됩니다. 모델 간 관계를 통해 데이터 무결성을 보장합니다.</p>
+                </div>
+
+                <!-- ERD Diagram -->
+                <div class="content-block">
+                    <h3>Entity Relationship Diagram</h3>
+                    <div class="erd-container">
+                        <div class="erd-diagram">
+                            <!-- Players Group -->
+                            <div class="erd-group" data-group="players">
+                                <div class="erd-group-title">Players App</div>
+
+                                <div class="erd-entity" data-entity="DestinyPlayer">
+                                    <div class="entity-header">DestinyPlayer</div>
+                                    <div class="entity-fields">
+                                        <div class="field pk">membership_id (PK)</div>
+                                        <div class="field">display_name</div>
+                                        <div class="field">active_triumph_score</div>
+                                        <div class="field">last_updated</div>
+                                    </div>
+                                </div>
+
+                                <div class="erd-relation" data-from="DestinyPlayer" data-to="DestinyCharacter">
+                                    <span class="relation-line">│</span>
+                                    <span class="relation-type">1:N</span>
+                                </div>
+
+                                <div class="erd-entity" data-entity="DestinyCharacter">
+                                    <div class="entity-header">DestinyCharacter</div>
+                                    <div class="entity-fields">
+                                        <div class="field pk">character_id (PK)</div>
+                                        <div class="field fk">player (FK)</div>
+                                        <div class="field">class_type</div>
+                                        <div class="field">light_level</div>
+                                        <div class="field">minutes_played_total</div>
+                                    </div>
+                                </div>
+
+                                <div class="erd-entity singleton" data-entity="GlobalStatisticsCache">
+                                    <div class="entity-header">GlobalStatisticsCache</div>
+                                    <div class="entity-badge">Singleton</div>
+                                    <div class="entity-fields">
+                                        <div class="field">avg_light_level</div>
+                                        <div class="field">avg_triumph_score</div>
+                                        <div class="field">class_distribution (JSON)</div>
+                                        <div class="field">last_updated</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accounts Group -->
+                            <div class="erd-group" data-group="accounts">
+                                <div class="erd-group-title">Accounts App</div>
+
+                                <div class="erd-entity" data-entity="BungieUser">
+                                    <div class="entity-header">BungieUser</div>
+                                    <div class="entity-fields">
+                                        <div class="field pk">bungie_membership_id (PK)</div>
+                                        <div class="field">display_name</div>
+                                        <div class="field encrypted">_access_token (encrypted)</div>
+                                        <div class="field encrypted">_refresh_token (encrypted)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fireteams Group -->
+                            <div class="erd-group" data-group="fireteams">
+                                <div class="erd-group-title">Fireteams App</div>
+
+                                <div class="erd-entity" data-entity="Fireteam">
+                                    <div class="entity-header">Fireteam</div>
+                                    <div class="entity-fields">
+                                        <div class="field pk">id (PK)</div>
+                                        <div class="field fk">creator (FK → BungieUser)</div>
+                                        <div class="field">title</div>
+                                        <div class="field">status</div>
+                                        <div class="field">max_members</div>
+                                    </div>
+                                </div>
+
+                                <div class="erd-entity" data-entity="FireteamMember">
+                                    <div class="entity-header">FireteamMember</div>
+                                    <div class="entity-fields">
+                                        <div class="field fk">fireteam (FK)</div>
+                                        <div class="field fk">user (FK → BungieUser)</div>
+                                        <div class="field">role</div>
+                                        <div class="field">status</div>
+                                    </div>
+                                    <div class="entity-constraint">UNIQUE(fireteam, user)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Details -->
+                <div class="content-block">
+                    <h3>핵심 모델 상세</h3>
+                    <div class="model-tabs">
+                        <button class="model-tab active" data-model="player">DestinyPlayer</button>
+                        <button class="model-tab" data-model="character">DestinyCharacter</button>
+                        <button class="model-tab" data-model="cache">GlobalStatisticsCache</button>
+                    </div>
+                    <div class="model-content">
+                        <div class="model-panel active" data-model="player">
+                            <div class="code-block-container">
+                                <div class="code-header">
+                                    <span class="code-lang">Python</span>
+                                    <span class="code-file">players/models.py</span>
+                                </div>
+                                <pre><code class="language-python">class DestinyPlayer(models.Model):
+    """Destiny 2 플레이어 프로필 캐시"""
+
+    membership_id = models.CharField(max_length=32, primary_key=True)
+    membership_type = models.IntegerField(choices=PLATFORM_CHOICES)
+    display_name = models.CharField(max_length=255)
+    bungie_global_display_name = models.CharField(max_length=255)
+
+    # Triumph Scores
+    active_triumph_score = models.IntegerField(default=0)
+    lifetime_triumph_score = models.IntegerField(default=0)
+
+    # Timestamps
+    first_seen = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-active_triumph_score']</code></pre>
+                            </div>
+                        </div>
+                        <div class="model-panel" data-model="character">
+                            <div class="code-block-container">
+                                <div class="code-header">
+                                    <span class="code-lang">Python</span>
+                                    <span class="code-file">players/models.py</span>
+                                </div>
+                                <pre><code class="language-python">class DestinyCharacter(models.Model):
+    """Destiny 2 캐릭터 데이터"""
+
+    CLASS_CHOICES = [
+        (0, 'Titan'),
+        (1, 'Hunter'),
+        (2, 'Warlock'),
+    ]
+
+    character_id = models.CharField(max_length=32, primary_key=True)
+    player = models.ForeignKey(
+        DestinyPlayer,
+        on_delete=models.CASCADE,
+        related_name='characters'
+    )
+
+    class_type = models.IntegerField(choices=CLASS_CHOICES)
+    light_level = models.IntegerField(default=0)
+    minutes_played_total = models.IntegerField(default=0)
+
+    @property
+    def hours_played(self):
+        return self.minutes_played_total / 60</code></pre>
+                            </div>
+                        </div>
+                        <div class="model-panel" data-model="cache">
+                            <div class="code-block-container">
+                                <div class="code-header">
+                                    <span class="code-lang">Python</span>
+                                    <span class="code-file">players/models.py</span>
+                                </div>
+                                <pre><code class="language-python">class GlobalStatisticsCache(models.Model):
+    """전역 통계 캐시 (Singleton 패턴)"""
+
+    # Light Level Statistics
+    avg_light_level = models.FloatField(default=0)
+    stddev_light_level = models.FloatField(default=0)
+    median_light_level = models.FloatField(default=0)
+    q1_light_level = models.FloatField(default=0)
+    q3_light_level = models.FloatField(default=0)
+
+    # Triumph Score Statistics
+    avg_triumph_score = models.FloatField(default=0)
+
+    # Class Distribution (JSON)
+    titan_count = models.IntegerField(default=0)
+    hunter_count = models.IntegerField(default=0)
+    warlock_count = models.IntegerField(default=0)
+
+    # Metadata
+    total_players = models.IntegerField(default=0)
+    total_characters = models.IntegerField(default=0)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def get_instance(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage Strategy -->
+                <div class="content-block">
+                    <h3>저장 전략</h3>
+                    <div class="strategy-cards">
+                        <div class="strategy-card">
+                            <div class="strategy-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </div>
+                            <h4>update_or_create</h4>
+                            <p>중복 방지와 업데이트를 원자적으로 처리. 동일 플레이어 데이터는 덮어쓰기.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <div class="strategy-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                </svg>
+                            </div>
+                            <h4>Singleton Cache</h4>
+                            <p>GlobalStatisticsCache는 단일 레코드로 관리. 통계 조회 시 DB 부하 최소화.</p>
+                        </div>
+                        <div class="strategy-card">
+                            <div class="strategy-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+                                </svg>
+                            </div>
+                            <h4>Snapshot History</h4>
+                            <p>PlayerTriumphSnapshot, CharacterLightSnapshot으로 시계열 데이터 보존.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Navigation -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="collection">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Collection</span>
+                    </button>
+                    <button class="nav-btn next" data-section="processing">
+                        <span>Processing</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECTION D: PROCESSING ========== -->
+        <section id="processing" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">04</span>
+                    <h2>Data Processing</h2>
+                    <p class="section-subtitle">Forging Statistics</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>저장된 원시 데이터는 <strong>통계 분석</strong>을 통해 의미 있는 인사이트로 변환됩니다. Python의 <strong>NumPy</strong>와 <strong>SciPy</strong>를 활용합니다.</p>
+                </div>
+
+                <!-- Processing Pipeline -->
+                <div class="content-block">
+                    <h3>처리 파이프라인</h3>
+                    <div class="processing-pipeline">
+                        <div class="pipeline-visual">
+                            <div class="pipe-stage" data-stage="raw">
+                                <div class="pipe-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M2 20h20v-4H2v4zm2-3h2v2H4v-2zM2 4v4h20V4H2z"/>
+                                    </svg>
+                                </div>
+                                <span class="pipe-label">Raw Data</span>
+                                <span class="pipe-desc">QuerySet</span>
+                            </div>
+                            <div class="pipe-arrow animated">→</div>
+                            <div class="pipe-stage" data-stage="aggregate">
+                                <div class="pipe-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                                    </svg>
+                                </div>
+                                <span class="pipe-label">Aggregation</span>
+                                <span class="pipe-desc">NumPy</span>
+                            </div>
+                            <div class="pipe-arrow animated">→</div>
+                            <div class="pipe-stage" data-stage="analysis">
+                                <div class="pipe-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z"/>
+                                    </svg>
+                                </div>
+                                <span class="pipe-label">Analysis</span>
+                                <span class="pipe-desc">SciPy</span>
+                            </div>
+                            <div class="pipe-arrow animated">→</div>
+                            <div class="pipe-stage" data-stage="cache">
+                                <div class="pipe-icon">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4z"/>
+                                    </svg>
+                                </div>
+                                <span class="pipe-label">Cache</span>
+                                <span class="pipe-desc">Singleton</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Calculated -->
+                <div class="content-block">
+                    <h3>계산되는 통계</h3>
+                    <div class="stats-grid">
+                        <div class="stat-category">
+                            <h4>기술 통계 (Descriptive)</h4>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-name">Mean (평균)</span>
+                                    <code>np.mean(values)</code>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-name">Median (중앙값)</span>
+                                    <code>np.median(values)</code>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-name">Std Dev (표준편차)</span>
+                                    <code>np.std(values)</code>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-name">Q1, Q3 (사분위수)</span>
+                                    <code>np.percentile(values, [25, 75])</code>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-category">
+                            <h4>추론 통계 (Inferential)</h4>
+                            <div class="stat-items">
+                                <div class="stat-item">
+                                    <span class="stat-name">ANOVA</span>
+                                    <code>scipy.stats.f_oneway()</code>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-name">Pearson Correlation</span>
+                                    <code>scipy.stats.pearsonr()</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hypothesis Testing -->
+                <div class="content-block">
+                    <h3>가설 검정 예시: ANOVA</h3>
+                    <div class="hypothesis-example">
+                        <div class="hypothesis-box">
+                            <div class="hypothesis-header">
+                                <span class="hypothesis-label">Research Question</span>
+                            </div>
+                            <p class="hypothesis-question">"Titan, Hunter, Warlock 간에 평균 전투력 차이가 있는가?"</p>
+                        </div>
+                        <div class="hypothesis-steps">
+                            <div class="hypothesis-step">
+                                <span class="step-num">H₀</span>
+                                <span class="step-text">귀무가설: 세 클래스 간 평균 전투력에 차이가 없다</span>
+                            </div>
+                            <div class="hypothesis-step">
+                                <span class="step-num">H₁</span>
+                                <span class="step-text">대립가설: 적어도 하나의 클래스는 다른 클래스와 평균이 다르다</span>
+                            </div>
+                            <div class="hypothesis-step">
+                                <span class="step-num">α</span>
+                                <span class="step-text">유의수준: 0.05</span>
+                            </div>
+                        </div>
+                        <div class="code-block-container">
+                            <div class="code-header">
+                                <span class="code-lang">Python</span>
+                            </div>
+                            <pre><code class="language-python">from scipy import stats
+
+# 클래스별 전투력 데이터 그룹화
+titan_light = characters.filter(class_type=0).values_list('light_level', flat=True)
+hunter_light = characters.filter(class_type=1).values_list('light_level', flat=True)
+warlock_light = characters.filter(class_type=2).values_list('light_level', flat=True)
+
+# One-way ANOVA 수행
+f_stat, p_value = stats.f_oneway(titan_light, hunter_light, warlock_light)
+
+# 결과 해석
+if p_value < 0.05:
+    result = "클래스 간 유의미한 차이가 있음"
+else:
+    result = "클래스 간 유의미한 차이가 없음"</code></pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cache Strategy -->
+                <div class="content-block">
+                    <h3>캐시 전략</h3>
+                    <div class="cache-diagram">
+                        <div class="cache-flow">
+                            <div class="cache-node request">
+                                <span class="cache-label">Request</span>
+                            </div>
+                            <div class="cache-arrow">→</div>
+                            <div class="cache-decision">
+                                <span class="cache-label">Cache Valid?</span>
+                                <div class="cache-branches">
+                                    <div class="cache-branch yes">
+                                        <span>Yes</span>
+                                        <div class="cache-arrow">→</div>
+                                        <div class="cache-node hit">Return Cache</div>
+                                    </div>
+                                    <div class="cache-branch no">
+                                        <span>No</span>
+                                        <div class="cache-arrow">→</div>
+                                        <div class="cache-node recalc">Recalculate</div>
+                                        <div class="cache-arrow">→</div>
+                                        <div class="cache-node update">Update Cache</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Navigation -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="storage">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Storage</span>
+                    </button>
+                    <button class="nav-btn next" data-section="visualization">
+                        <span>Visualization</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECTION E: VISUALIZATION ========== -->
+        <section id="visualization" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">05</span>
+                    <h2>Data Visualization</h2>
+                    <p class="section-subtitle">Illuminating Insights</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>처리된 데이터는 <strong>Chart.js</strong>와 <strong>Plotly</strong>를 통해 인터랙티브 차트로 시각화됩니다. 각 라이브러리는 고유한 강점을 가지고 있습니다.</p>
+                </div>
+
+                <!-- Library Comparison -->
+                <div class="content-block">
+                    <h3>시각화 라이브러리 비교</h3>
+                    <div class="lib-comparison">
+                        <div class="lib-card chartjs">
+                            <div class="lib-header">
+                                <h4>Chart.js</h4>
+                                <span class="lib-badge">Lightweight</span>
+                            </div>
+                            <ul class="lib-features">
+                                <li>가벼운 번들 사이즈</li>
+                                <li>Canvas 기반 렌더링</li>
+                                <li>간단한 API</li>
+                                <li>플러그인 확장 가능</li>
+                            </ul>
+                            <div class="lib-use-case">
+                                <strong>사용:</strong> 히스토그램, 분포 차트, 기본 Bar/Line
+                            </div>
+                        </div>
+                        <div class="lib-card plotly">
+                            <div class="lib-header">
+                                <h4>Plotly</h4>
+                                <span class="lib-badge">Statistical</span>
+                            </div>
+                            <ul class="lib-features">
+                                <li>고급 통계 차트</li>
+                                <li>SVG/WebGL 렌더링</li>
+                                <li>Zoom/Pan 내장</li>
+                                <li>3D 지원</li>
+                            </ul>
+                            <div class="lib-use-case">
+                                <strong>사용:</strong> Box Plot, Scatter Plot, 회귀선
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart.js Demo -->
+                <div class="content-block">
+                    <h3>Chart.js: 전투력 분포 히스토그램</h3>
+                    <div class="chart-demo-container">
+                        <div class="chart-demo">
+                            <canvas id="demoLightChart"></canvas>
+                        </div>
+                        <div class="chart-legend-custom">
+                            <div class="legend-item"><span class="legend-line mean"></span> Mean</div>
+                            <div class="legend-item"><span class="legend-line median"></span> Median</div>
+                            <div class="legend-item"><span class="legend-line q1"></span> Q1</div>
+                            <div class="legend-item"><span class="legend-line q3"></span> Q3</div>
+                        </div>
+                    </div>
+                    <div class="chart-code-toggle">
+                        <button class="toggle-code-btn" data-target="chartjs-code">View Code</button>
+                    </div>
+                    <div class="code-block-container collapsible" id="chartjs-code">
+                        <div class="code-header">
+                            <span class="code-lang">JavaScript</span>
+                        </div>
+                        <pre><code class="language-javascript">new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['1780', '1790', '1800', '1810', '1820'],
+        datasets: [{
+            label: 'Players',
+            data: [45, 120, 280, 350, 180],
+            backgroundColor: 'rgba(33, 150, 243, 0.6)',
+        }]
+    },
+    options: {
+        plugins: {
+            annotation: {
+                annotations: {
+                    meanLine: {
+                        type: 'line',
+                        xMin: 2.5,
+                        xMax: 2.5,
+                        borderColor: 'rgba(255, 99, 132, 0.9)',
+                        borderDash: [6, 4],
+                        label: { content: 'Mean' }
+                    }
+                }
+            }
+        }
+    }
+});</code></pre>
+                    </div>
+                </div>
+
+                <!-- Plotly Demo -->
+                <div class="content-block">
+                    <h3>Plotly: 클래스별 전투력 Box Plot</h3>
+                    <div class="chart-demo-container">
+                        <div id="demoBoxPlot" class="plotly-demo"></div>
+                    </div>
+                    <div class="chart-code-toggle">
+                        <button class="toggle-code-btn" data-target="plotly-code">View Code</button>
+                    </div>
+                    <div class="code-block-container collapsible" id="plotly-code">
+                        <div class="code-header">
+                            <span class="code-lang">JavaScript</span>
+                        </div>
+                        <pre><code class="language-javascript">Plotly.newPlot('boxplot', [
+    {
+        y: titanLightLevels,
+        name: 'Titan',
+        type: 'box',
+        marker: { color: '#ef5350' },
+        boxmean: true,
+    },
+    {
+        y: hunterLightLevels,
+        name: 'Hunter',
+        type: 'box',
+        marker: { color: '#42a5f5' },
+        boxmean: true,
+    },
+    {
+        y: warlockLightLevels,
+        name: 'Warlock',
+        type: 'box',
+        marker: { color: '#ffee58' },
+        boxmean: true,
+    }
+], {
+    title: 'Light Level by Class',
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+});</code></pre>
+                    </div>
+                </div>
+
+                <!-- Scatter Plot Demo -->
+                <div class="content-block">
+                    <h3>Plotly: 상관관계 Scatter Plot</h3>
+                    <div class="chart-demo-container">
+                        <div id="demoScatterPlot" class="plotly-demo"></div>
+                    </div>
+                    <div class="insight-box">
+                        <div class="insight-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                            </svg>
+                        </div>
+                        <div class="insight-content">
+                            <strong>Insight:</strong> 전투력과 업적 점수 사이에는 양의 상관관계가 있습니다. 오래 플레이한 유저일수록 두 지표 모두 높은 경향이 있습니다.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Navigation -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="processing">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Processing</span>
+                    </button>
+                    <button class="nav-btn next" data-section="ux">
+                        <span>UX</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== SECTION F: USER EXPERIENCE ========== -->
+        <section id="ux" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">06</span>
+                    <h2>User Experience</h2>
+                    <p class="section-subtitle">Guardian's View</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <div class="content-intro">
+                    <p>최종 사용자는 다양한 <strong>인터랙티브 요소</strong>를 통해 데이터를 탐색합니다. "나의 위치"를 보여주는 것이 핵심 UX입니다.</p>
+                </div>
+
+                <!-- UX Principles -->
+                <div class="content-block">
+                    <h3>UX 설계 원칙</h3>
+                    <div class="ux-principles">
+                        <div class="principle-card">
+                            <div class="principle-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </div>
+                            <h4>Context Awareness</h4>
+                            <p>사용자의 데이터를 전체 분포 내에서 보여주어 맥락 제공</p>
+                        </div>
+                        <div class="principle-card">
+                            <div class="principle-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                                </svg>
+                            </div>
+                            <h4>Exploration</h4>
+                            <p>필터링으로 데이터 서브셋 탐색 가능</p>
+                        </div>
+                        <div class="principle-card">
+                            <div class="principle-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                </svg>
+                            </div>
+                            <h4>Immediate Feedback</h4>
+                            <p>필터 변경 시 차트 즉시 업데이트</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Your Position Feature -->
+                <div class="content-block">
+                    <h3>핵심 기능: "Your Position"</h3>
+                    <div class="feature-showcase">
+                        <div class="feature-visual">
+                            <div class="position-demo">
+                                <div class="position-badge-demo">
+                                    <span class="badge-label">Light Level</span>
+                                    <span class="badge-value top-10">Top 8%</span>
+                                </div>
+                                <div class="position-badge-demo">
+                                    <span class="badge-label">Triumph Score</span>
+                                    <span class="badge-value top-25">Top 22%</span>
+                                </div>
+                                <div class="position-badge-demo">
+                                    <span class="badge-label">Play Time</span>
+                                    <span class="badge-value top-50">Top 45%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="feature-explanation">
+                            <p>로그인한 사용자는 자신의 통계가 전체 플레이어 중 어디에 위치하는지 확인할 수 있습니다.</p>
+                            <ul>
+                                <li><strong>Top 10%</strong>: 골드 배지</li>
+                                <li><strong>Top 25%</strong>: 그린 배지</li>
+                                <li><strong>Top 50%</strong>: 블루 배지</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Filter Demo -->
+                <div class="content-block">
+                    <h3>인터랙티브 필터링</h3>
+                    <div class="filter-demo">
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label>Min Play Time (hours)</label>
+                                <input type="range" id="demoMinPlaytime" min="0" max="500" value="0">
+                                <span class="filter-value" id="demoMinPlaytimeValue">0h</span>
+                            </div>
+                            <div class="filter-group">
+                                <label>Min Light Level</label>
+                                <input type="range" id="demoMinLight" min="1780" max="1820" value="1780">
+                                <span class="filter-value" id="demoMinLightValue">1780</span>
+                            </div>
+                        </div>
+                        <div class="filter-result">
+                            <span class="result-label">Matching Players:</span>
+                            <span class="result-value" id="demoFilterCount">1,250</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- User Radar Chart -->
+                <div class="content-block">
+                    <h3>사용자 프로필 레이더 차트</h3>
+                    <div class="chart-demo-container small">
+                        <canvas id="demoRadarChart"></canvas>
+                    </div>
+                    <p class="chart-description">사용자의 다양한 지표를 한눈에 비교할 수 있는 레이더 차트. 각 축은 0-100 범위로 정규화되어 있습니다.</p>
+                </div>
+
+                <!-- Section Navigation -->
+                <div class="section-nav">
+                    <button class="nav-btn prev" data-section="visualization">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                        </svg>
+                        <span>Visualization</span>
+                    </button>
+                    <button class="nav-btn next" data-section="conclusion">
+                        <span>Conclusion</span>
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========== CONCLUSION SECTION ========== -->
+        <section id="conclusion" class="content-section">
+            <div class="section-header">
+                <button class="back-to-hub" data-section="hub">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    <span>Hub</span>
+                </button>
+                <div class="section-title-group">
+                    <span class="section-number">07</span>
+                    <h2>Conclusion</h2>
+                    <p class="section-subtitle">Eyes Up, Guardian</p>
+                </div>
+            </div>
+
+            <div class="section-content">
+                <!-- Journey Summary -->
+                <div class="content-block conclusion-summary">
+                    <h3>The Complete Data Journey</h3>
+                    <div class="journey-summary">
+                        <div class="journey-step">
+                            <div class="journey-icon sources">01</div>
+                            <div class="journey-content">
+                                <h4>Sources</h4>
+                                <p>Bungie API에서 원시 JSON 데이터 획득</p>
+                            </div>
+                        </div>
+                        <div class="journey-connector">→</div>
+                        <div class="journey-step">
+                            <div class="journey-icon collection">02</div>
+                            <div class="journey-content">
+                                <h4>Collection</h4>
+                                <p>OAuth 인증 및 암호화된 토큰 관리</p>
+                            </div>
+                        </div>
+                        <div class="journey-connector">→</div>
+                        <div class="journey-step">
+                            <div class="journey-icon storage">03</div>
+                            <div class="journey-content">
+                                <h4>Storage</h4>
+                                <p>Django ORM으로 구조화된 데이터 저장</p>
+                            </div>
+                        </div>
+                        <div class="journey-connector">→</div>
+                        <div class="journey-step">
+                            <div class="journey-icon processing">04</div>
+                            <div class="journey-content">
+                                <h4>Processing</h4>
+                                <p>NumPy/SciPy로 통계 분석 및 캐싱</p>
+                            </div>
+                        </div>
+                        <div class="journey-connector">→</div>
+                        <div class="journey-step">
+                            <div class="journey-icon visualization">05</div>
+                            <div class="journey-content">
+                                <h4>Visualization</h4>
+                                <p>Chart.js/Plotly로 인터랙티브 시각화</p>
+                            </div>
+                        </div>
+                        <div class="journey-connector">→</div>
+                        <div class="journey-step">
+                            <div class="journey-icon ux">06</div>
+                            <div class="journey-content">
+                                <h4>UX</h4>
+                                <p>사용자 맥락과 탐색 기능 제공</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Key Achievements -->
+                <div class="content-block">
+                    <h3>구현 하이라이트</h3>
+                    <div class="achievement-grid">
+                        <div class="achievement-card">
+                            <div class="achievement-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                                </svg>
+                            </div>
+                            <h4>보안</h4>
+                            <p>Fernet 암호화로 OAuth 토큰 안전 저장</p>
+                        </div>
+                        <div class="achievement-card">
+                            <div class="achievement-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.92 6-4.68 7.28l1.16 1.78C20.08 19.37 22 15.92 22 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.03c-4.95.5-8.89 4.76-8.89 9.97 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.76-1.08A7.946 7.946 0 0112 19z"/>
+                                </svg>
+                            </div>
+                            <h4>성능</h4>
+                            <p>Singleton 캐시로 통계 조회 최적화</p>
+                        </div>
+                        <div class="achievement-card">
+                            <div class="achievement-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5 9.2h3V19H5zM10.6 5h2.8v14h-2.8zm5.6 8H19v6h-2.8z"/>
+                                </svg>
+                            </div>
+                            <h4>이중 시각화</h4>
+                            <p>Chart.js (탐색) + Plotly (분석) 조합</p>
+                        </div>
+                        <div class="achievement-card">
+                            <div class="achievement-icon">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                </svg>
+                            </div>
+                            <h4>사용자 중심</h4>
+                            <p>"Your Position" 기능으로 개인화된 인사이트</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tech Stack Summary -->
+                <div class="content-block">
+                    <h3>기술 스택 요약</h3>
+                    <div class="tech-stack-visual">
+                        <div class="stack-layer backend">
+                            <span class="layer-label">Backend</span>
+                            <div class="layer-items">
+                                <span class="tech-item">Django 5.x</span>
+                                <span class="tech-item">Python 3.13</span>
+                                <span class="tech-item">DRF</span>
+                            </div>
+                        </div>
+                        <div class="stack-layer data">
+                            <span class="layer-label">Data</span>
+                            <div class="layer-items">
+                                <span class="tech-item">SQLite</span>
+                                <span class="tech-item">NumPy</span>
+                                <span class="tech-item">SciPy</span>
+                            </div>
+                        </div>
+                        <div class="stack-layer frontend">
+                            <span class="layer-label">Frontend</span>
+                            <div class="layer-items">
+                                <span class="tech-item">Bootstrap 5</span>
+                                <span class="tech-item">Chart.js</span>
+                                <span class="tech-item">Plotly</span>
+                            </div>
+                        </div>
+                        <div class="stack-layer external">
+                            <span class="layer-label">External</span>
+                            <div class="layer-items">
+                                <span class="tech-item">Bungie API</span>
+                                <span class="tech-item">OAuth 2.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Return to Hub -->
+                <div class="section-nav center">
+                    <button class="nav-btn hub" data-section="hub">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                        </svg>
+                        <span>Return to Hub</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="report-footer">
+            <div class="footer-decoration">
+                <div class="footer-line"></div>
+                <div class="destiny-symbol">◇</div>
+                <div class="footer-line"></div>
+            </div>
+            <p class="footer-text">Digital Archiving & Data Visualization</p>
+            <p class="footer-credit">Project Vanguard - 2025</p>
+            <div class="footer-links">
+                <a href="https://vanguard-lfg.com/" target="_blank">Live Service</a>
+                <span class="footer-divider">|</span>
+                <a href="https://github.com/Bcyan77/Vanguard" target="_blank">GitHub</a>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Highlight.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js"></script>
+
+    <!-- Report JS -->
+    <script src="js/report.js"></script>
+</body>
+</html>
