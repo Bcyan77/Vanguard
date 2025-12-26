@@ -55,4 +55,5 @@ ngrok
 CLAUDE.md
 .claude
 
-presentation/
+# Documentation (sensitive)
+GCP_DEPLOYMENT.md
