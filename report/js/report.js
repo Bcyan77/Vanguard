@@ -57,12 +57,24 @@ document.addEventListener('DOMContentLoaded', function() {
         updateHubBtn();
         updateHubNodes();
 
-        // Scroll to content start (below nav-bar)
+        // Scroll to appropriate position
         const navBar = document.querySelector('.nav-bar');
         const navBarHeight = navBar ? navBar.offsetHeight : 0;
-        const progressBarHeight = 3; // progress-bar height
-        const scrollTarget = navBarHeight + progressBarHeight;
-        window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+        const progressBarHeight = 3;
+
+        if (sectionId === 'hub') {
+            // Hub: 네비게이션 바 바로 아래로 스크롤
+            const scrollTarget = navBarHeight + progressBarHeight;
+            window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+        } else {
+            // 다른 섹션: section-header(섹션 번호/제목)로 스크롤
+            const sectionHeader = sections[sectionId].querySelector('.section-header');
+            if (sectionHeader) {
+                const headerTop = sectionHeader.getBoundingClientRect().top + window.scrollY;
+                const scrollTarget = headerTop - navBarHeight - progressBarHeight - 30;
+                window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
+            }
+        }
     }
 
     // Update floating index
@@ -263,27 +275,37 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // ============================================
-    // DEMO CHARTS
+    // DEMO CHARTS (API 연동 + 폴백 데이터)
     // ============================================
 
-    // Light Level Histogram Demo
-    const lightChartCtx = document.getElementById('demoLightChart');
-    if (lightChartCtx) {
-        const gradient = lightChartCtx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+    // 차트 렌더링 헬퍼 함수
+    function renderLightChart(ctx, labels, values, stats) {
+        const findIndex = (val) => {
+            for (let i = 0; i < labels.length; i++) {
+                const bucketStart = parseInt(labels[i]);
+                if (val >= bucketStart && val < bucketStart + 10) return i;
+            }
+            return labels.length / 2;
+        };
+
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
         gradient.addColorStop(0, 'rgba(33, 150, 243, 0.8)');
         gradient.addColorStop(1, 'rgba(33, 150, 243, 0.1)');
 
-        new Chart(lightChartCtx, {
-            type: 'bar',
+        new Chart(ctx, {
+            type: 'line',
             data: {
-                labels: ['1780', '1790', '1800', '1810', '1820'],
+                labels: labels,
                 datasets: [{
-                    label: 'Players',
-                    data: [45, 120, 280, 350, 180],
+                    label: 'Characters',
+                    data: values,
+                    fill: true,
+                    tension: 0.4,
                     backgroundColor: gradient,
                     borderColor: 'rgba(33, 150, 243, 1)',
-                    borderWidth: 1,
-                    borderRadius: 4,
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: 'rgba(33, 150, 243, 1)',
                 }]
             },
             options: {
@@ -295,32 +317,32 @@ document.addEventListener('DOMContentLoaded', function() {
                         annotations: {
                             meanLine: {
                                 type: 'line',
-                                xMin: 2.5,
-                                xMax: 2.5,
+                                xMin: findIndex(stats.avg),
+                                xMax: findIndex(stats.avg),
                                 borderColor: 'rgba(255, 99, 132, 0.9)',
                                 borderWidth: 2,
                                 borderDash: [6, 4],
                             },
                             medianLine: {
                                 type: 'line',
-                                xMin: 2.8,
-                                xMax: 2.8,
+                                xMin: findIndex(stats.median),
+                                xMax: findIndex(stats.median),
                                 borderColor: 'rgba(76, 175, 80, 0.9)',
                                 borderWidth: 2,
                                 borderDash: [5, 3],
                             },
                             q1Line: {
                                 type: 'line',
-                                xMin: 1.5,
-                                xMax: 1.5,
+                                xMin: findIndex(stats.q1),
+                                xMax: findIndex(stats.q1),
                                 borderColor: 'rgba(54, 162, 235, 0.7)',
                                 borderWidth: 2,
                                 borderDash: [4, 3],
                             },
                             q3Line: {
                                 type: 'line',
-                                xMin: 3.5,
-                                xMax: 3.5,
+                                xMin: findIndex(stats.q3),
+                                xMax: findIndex(stats.q3),
                                 borderColor: 'rgba(54, 162, 235, 0.7)',
                                 borderWidth: 2,
                                 borderDash: [4, 3],
@@ -343,85 +365,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Box Plot Demo
-    const boxPlotDiv = document.getElementById('demoBoxPlot');
-    if (boxPlotDiv) {
-        // Sample data
-        const titanData = Array.from({length: 50}, () => 1785 + Math.random() * 40);
-        const hunterData = Array.from({length: 50}, () => 1790 + Math.random() * 35);
-        const warlockData = Array.from({length: 50}, () => 1788 + Math.random() * 38);
-
-        Plotly.newPlot(boxPlotDiv, [
-            {
-                y: titanData,
-                name: 'Titan',
-                type: 'box',
-                marker: { color: '#ef5350' },
-                boxmean: true,
-            },
-            {
-                y: hunterData,
-                name: 'Hunter',
-                type: 'box',
-                marker: { color: '#42a5f5' },
-                boxmean: true,
-            },
-            {
-                y: warlockData,
-                name: 'Warlock',
-                type: 'box',
-                marker: { color: '#ffee58' },
-                boxmean: true,
-            }
+    function renderBoxPlot(div, titanData, hunterData, warlockData) {
+        Plotly.newPlot(div, [
+            { y: titanData, name: 'Titan', type: 'box', marker: { color: '#ef5350' }, boxmean: true },
+            { y: hunterData, name: 'Hunter', type: 'box', marker: { color: '#42a5f5' }, boxmean: true },
+            { y: warlockData, name: 'Warlock', type: 'box', marker: { color: '#ffee58' }, boxmean: true }
         ], {
             title: { text: 'Light Level by Class', font: { size: 14, color: '#b0b0b0' } },
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
             font: { color: '#888', size: 11 },
             margin: { l: 50, r: 20, t: 40, b: 40 },
-            yaxis: {
-                title: 'Light Level',
-                gridcolor: 'rgba(255,255,255,0.05)',
-            },
+            yaxis: { title: 'Light Level', gridcolor: 'rgba(255,255,255,0.05)' },
             showlegend: false,
-        }, {
-            responsive: true,
-            displayModeBar: false,
-        });
+        }, { responsive: true, displayModeBar: false });
     }
 
-    // Scatter Plot Demo
-    const scatterPlotDiv = document.getElementById('demoScatterPlot');
-    if (scatterPlotDiv) {
-        // Sample data with correlation
-        const n = 100;
-        const lightLevels = Array.from({length: n}, () => 1780 + Math.random() * 40);
-        const triumphScores = lightLevels.map(l => (l - 1780) * 1500 + 30000 + (Math.random() - 0.5) * 20000);
-
-        // Trend line
+    function renderScatterPlot(div, lightLevels, triumphScores, slope, intercept) {
         const minX = Math.min(...lightLevels);
         const maxX = Math.max(...lightLevels);
-        const avgY = triumphScores.reduce((a, b) => a + b, 0) / n;
-        const slope = 1200;
-        const intercept = avgY - slope * ((minX + maxX) / 2);
 
-        Plotly.newPlot(scatterPlotDiv, [
+        Plotly.newPlot(div, [
             {
-                x: lightLevels,
-                y: triumphScores,
-                mode: 'markers',
-                type: 'scatter',
-                marker: {
-                    color: 'rgba(255, 215, 0, 0.6)',
-                    size: 8,
-                },
+                x: lightLevels, y: triumphScores,
+                mode: 'markers', type: 'scatter',
+                marker: { color: 'rgba(255, 215, 0, 0.6)', size: 8 },
                 name: 'Players',
             },
             {
                 x: [minX, maxX],
-                y: [intercept + slope * minX, intercept + slope * maxX],
-                mode: 'lines',
-                type: 'scatter',
+                y: [slope * minX + intercept, slope * maxX + intercept],
+                mode: 'lines', type: 'scatter',
                 line: { color: '#ff6b6b', width: 2, dash: 'dash' },
                 name: 'Trend Line',
             }
@@ -431,20 +405,81 @@ document.addEventListener('DOMContentLoaded', function() {
             plot_bgcolor: 'rgba(0,0,0,0)',
             font: { color: '#888', size: 11 },
             margin: { l: 60, r: 20, t: 40, b: 50 },
-            xaxis: {
-                title: 'Light Level',
-                gridcolor: 'rgba(255,255,255,0.05)',
-            },
-            yaxis: {
-                title: 'Triumph Score',
-                gridcolor: 'rgba(255,255,255,0.05)',
-            },
+            xaxis: { title: 'Light Level', gridcolor: 'rgba(255,255,255,0.05)' },
+            yaxis: { title: 'Triumph Score', gridcolor: 'rgba(255,255,255,0.05)' },
             showlegend: true,
             legend: { x: 0, y: 1, bgcolor: 'rgba(0,0,0,0)' },
-        }, {
-            responsive: true,
-            displayModeBar: false,
-        });
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    // 폴백 데이터 (API 실패 시 사용)
+    const fallbackData = {
+        light: {
+            distribution: { '1780': 45, '1790': 120, '1800': 280, '1810': 350, '1820': 180 },
+            stats: { avg: 1805, median: 1808, q1: 1795, q3: 1815 }
+        },
+        boxplot: {
+            titan: Array.from({length: 50}, () => 1785 + Math.random() * 40),
+            hunter: Array.from({length: 50}, () => 1790 + Math.random() * 35),
+            warlock: Array.from({length: 50}, () => 1788 + Math.random() * 38)
+        },
+        scatter: {
+            x: Array.from({length: 100}, () => 1780 + Math.random() * 40),
+            slope: 1200,
+            intercept: -2100000
+        }
+    };
+    fallbackData.scatter.y = fallbackData.scatter.x.map(l =>
+        (l - 1780) * 1500 + 30000 + (Math.random() - 0.5) * 20000
+    );
+
+    // Light Level Histogram Demo
+    const lightChartCtx = document.getElementById('demoLightChart');
+    if (lightChartCtx) {
+        fetch('/api/statistics/descriptive/')
+            .then(res => res.json())
+            .then(data => {
+                const dist = data.light_level.distribution;
+                renderLightChart(lightChartCtx, Object.keys(dist), Object.values(dist), data.light_level);
+            })
+            .catch(() => {
+                // API 실패 시 폴백 데이터 사용
+                const fb = fallbackData.light;
+                renderLightChart(lightChartCtx, Object.keys(fb.distribution), Object.values(fb.distribution), fb.stats);
+            });
+    }
+
+    // Box Plot Demo
+    const boxPlotDiv = document.getElementById('demoBoxPlot');
+    if (boxPlotDiv) {
+        fetch('/api/statistics/class-comparison/')
+            .then(res => res.json())
+            .then(data => {
+                const bp = data.boxplot_data;
+                renderBoxPlot(boxPlotDiv, bp.titan, bp.hunter, bp.warlock);
+            })
+            .catch(() => {
+                // API 실패 시 폴백 데이터 사용
+                const fb = fallbackData.boxplot;
+                renderBoxPlot(boxPlotDiv, fb.titan, fb.hunter, fb.warlock);
+            });
+    }
+
+    // Scatter Plot Demo
+    const scatterPlotDiv = document.getElementById('demoScatterPlot');
+    if (scatterPlotDiv) {
+        fetch('/api/statistics/correlation/')
+            .then(res => res.json())
+            .then(data => {
+                const corr = data.correlation_analysis;
+                renderScatterPlot(scatterPlotDiv, corr.scatter_data.x, corr.scatter_data.y,
+                    corr.regression.slope, corr.regression.intercept);
+            })
+            .catch(() => {
+                // API 실패 시 폴백 데이터 사용
+                const fb = fallbackData.scatter;
+                renderScatterPlot(scatterPlotDiv, fb.x, fb.y, fb.slope, fb.intercept);
+            });
     }
 
     // Radar Chart Demo

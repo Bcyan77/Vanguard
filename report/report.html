@@ -233,7 +233,8 @@
 
             <div class="section-content">
                 <div class="content-intro">
-                    <p>모든 데이터는 <strong>Bungie API</strong>에서 시작됩니다. Bungie는 Destiny 2의 개발사로, 공식 API를 통해 플레이어 정보, 캐릭터 데이터, 활동 기록 등을 제공합니다.</p>
+                    <p>모든 데이터는 <strong>Bungie API</strong>를 통해 수집합니다.</p>
+                    <p>공식 API를 통해 플레이어 정보, 캐릭터 데이터, 활동 기록 등을 수집합니다.</p>
                 </div>
 
                 <!-- API Overview -->
@@ -427,7 +428,8 @@
 
             <div class="section-content">
                 <div class="content-intro">
-                    <p>데이터 수집은 <strong>OAuth 인증</strong>으로 시작됩니다. 사용자가 Bungie 계정으로 로그인하면, 안전하게 데이터에 접근할 수 있는 토큰을 받습니다.</p>
+                    <p>데이터 수집은 <strong>OAuth</strong>를 사용합니다.</p>
+                    <p>사용자는 Bungie 계정으로 로그인할 수 있습니다.</p>
                 </div>
 
                 <!-- OAuth Flow -->
@@ -497,19 +499,26 @@
                                 </div>
                                 <pre><code class="language-python"># accounts/models.py
 class BungieUser(AbstractBaseUser):
-    _access_token = models.TextField(blank=True)
+    access_token = models.TextField(blank=True, null=True)
+    refresh_token = models.TextField(blank=True, null=True)
+
+    def encrypt_token(self, token):
+        """Encrypt a token for storage"""
+        if not token:
+            return None
+        key = base64.urlsafe_b64encode(
+            settings.SECRET_KEY[:32].encode().ljust(32)[:32]
+        )
+        f = Fernet(key)
+        return f.encrypt(token.encode()).decode()
 
     def set_access_token(self, token):
-        cipher = Fernet(get_encryption_key())
-        self._access_token = cipher.encrypt(
-            token.encode()
-        ).decode()
+        """Set and encrypt access token"""
+        self.access_token = self.encrypt_token(token)
 
     def get_access_token(self):
-        cipher = Fernet(get_encryption_key())
-        return cipher.decrypt(
-            self._access_token.encode()
-        ).decode()</code></pre>
+        """Get and decrypt access token"""
+        return self.decrypt_token(self.access_token)</code></pre>
                             </div>
                         </div>
                     </div>
@@ -586,31 +595,37 @@ class BungieUser(AbstractBaseUser):
                             <span class="code-lang">Python</span>
                             <span class="code-file">players/services.py</span>
                         </div>
-                        <pre><code class="language-python">def sync_player_from_api(membership_id, membership_type):
-    """Bungie API에서 플레이어 데이터를 가져와 동기화"""
+                        <pre><code class="language-python">def sync_player_from_api(membership_type, membership_id, profile_data):
+    """Bungie API 응답 데이터를 DB에 저장/업데이트"""
+    profile_info = profile_data.get('profile', {}).get('data', {})
+    user_info = profile_info.get('userInfo', {})
+    characters_data = profile_data.get('characters', {}).get('data', {})
+    profile_records = profile_data.get('profileRecords', {}).get('data', {})
 
-    # 1. API에서 프로필 데이터 조회
-    profile = bungie_api.get_player_profile(
-        membership_id,
-        membership_type
-    )
-
-    # 2. 플레이어 레코드 생성 또는 업데이트
     player, created = DestinyPlayer.objects.update_or_create(
         membership_id=membership_id,
         membership_type=membership_type,
         defaults={
-            'display_name': profile.get('displayName'),
-            'bungie_global_display_name': profile.get('bungieGlobalDisplayName'),
-            'active_triumph_score': profile.get('activeScore', 0),
-            'last_updated': timezone.now(),
+            'display_name': user_info.get('displayName', ''),
+            'bungie_global_display_name': user_info.get('bungieGlobalDisplayName'),
+            'bungie_global_display_name_code': str(user_info.get('bungieGlobalDisplayNameCode', '') or ''),
+            'icon_path': user_info.get('iconPath', ''),
+            'active_triumph_score': profile_records.get('activeScore', 0),
+            'lifetime_triumph_score': profile_records.get('lifetimeScore', 0),
         }
     )
 
-    # 3. 캐릭터 데이터 동기화
-    for char_id, char_data in profile.get('characters', {}).items():
-        sync_character(player, char_id, char_data)
+    # 일일 트라이엄프 스냅샷 저장
+    PlayerTriumphSnapshot.objects.update_or_create(
+        player=player,
+        snapshot_date=date.today(),
+        defaults={
+            'active_triumph_score': profile_records.get('activeScore', 0),
+            'lifetime_triumph_score': profile_records.get('lifetimeScore', 0),
+        }
+    )
 
+    sync_characters(player, characters_data)
     return player</code></pre>
                     </div>
                 </div>
@@ -762,23 +777,27 @@ class BungieUser(AbstractBaseUser):
                                     <span class="code-file">players/models.py</span>
                                 </div>
                                 <pre><code class="language-python">class DestinyPlayer(models.Model):
-    """Destiny 2 플레이어 프로필 캐시"""
+    """플레이어 프로필 데이터 저장 (캐싱 및 통계용)"""
 
-    membership_id = models.CharField(max_length=32, primary_key=True)
-    membership_type = models.IntegerField(choices=PLATFORM_CHOICES)
+    MEMBERSHIP_TYPE_CHOICES = [
+        (1, 'Xbox'), (2, 'PlayStation'), (3, 'Steam'),
+        (4, 'Blizzard'), (5, 'Stadia'), (6, 'Epic Games'),
+    ]
+
+    membership_id = models.CharField(max_length=50, db_index=True)
+    membership_type = models.IntegerField(choices=MEMBERSHIP_TYPE_CHOICES)
     display_name = models.CharField(max_length=255)
-    bungie_global_display_name = models.CharField(max_length=255)
+    bungie_global_display_name = models.CharField(max_length=255, blank=True, null=True)
+    bungie_global_display_name_code = models.CharField(max_length=10, blank=True, null=True)
 
-    # Triumph Scores
     active_triumph_score = models.IntegerField(default=0)
     lifetime_triumph_score = models.IntegerField(default=0)
 
-    # Timestamps
     first_seen = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-active_triumph_score']</code></pre>
+        unique_together = ['membership_id', 'membership_type']</code></pre>
                             </div>
                         </div>
                         <div class="model-panel" data-model="character">
@@ -788,28 +807,28 @@ class BungieUser(AbstractBaseUser):
                                     <span class="code-file">players/models.py</span>
                                 </div>
                                 <pre><code class="language-python">class DestinyCharacter(models.Model):
-    """Destiny 2 캐릭터 데이터"""
+    """캐릭터 데이터 저장"""
 
-    CLASS_CHOICES = [
-        (0, 'Titan'),
-        (1, 'Hunter'),
-        (2, 'Warlock'),
-    ]
+    CLASS_TYPE_CHOICES = [(0, 'Titan'), (1, 'Hunter'), (2, 'Warlock')]
+    RACE_TYPE_CHOICES = [(0, 'Human'), (1, 'Awoken'), (2, 'Exo')]
+    GENDER_TYPE_CHOICES = [(0, 'Male'), (1, 'Female')]
 
-    character_id = models.CharField(max_length=32, primary_key=True)
     player = models.ForeignKey(
-        DestinyPlayer,
-        on_delete=models.CASCADE,
-        related_name='characters'
+        'DestinyPlayer', on_delete=models.CASCADE, related_name='characters'
     )
+    character_id = models.CharField(max_length=50, db_index=True)
 
-    class_type = models.IntegerField(choices=CLASS_CHOICES)
+    class_type = models.IntegerField(choices=CLASS_TYPE_CHOICES)
+    race_type = models.IntegerField(choices=RACE_TYPE_CHOICES, null=True)
+    gender_type = models.IntegerField(choices=GENDER_TYPE_CHOICES, null=True)
+
     light_level = models.IntegerField(default=0)
-    minutes_played_total = models.IntegerField(default=0)
+    minutes_played_total = models.BigIntegerField(default=0)
+    date_last_played = models.DateTimeField(null=True, blank=True)
 
-    @property
-    def hours_played(self):
-        return self.minutes_played_total / 60</code></pre>
+    class Meta:
+        unique_together = ['player', 'character_id']
+        ordering = ['-date_last_played']</code></pre>
                             </div>
                         </div>
                         <div class="model-panel" data-model="cache">
@@ -819,32 +838,37 @@ class BungieUser(AbstractBaseUser):
                                     <span class="code-file">players/models.py</span>
                                 </div>
                                 <pre><code class="language-python">class GlobalStatisticsCache(models.Model):
-    """전역 통계 캐시 (Singleton 패턴)"""
+    """전역 통계 캐시 (싱글톤, pk=1)"""
 
     # Light Level Statistics
     avg_light_level = models.FloatField(default=0)
     stddev_light_level = models.FloatField(default=0)
-    median_light_level = models.FloatField(default=0)
-    q1_light_level = models.FloatField(default=0)
-    q3_light_level = models.FloatField(default=0)
+    median_light_level = models.FloatField(null=True, blank=True)
+    q1_light_level = models.FloatField(null=True, blank=True)
+    q3_light_level = models.FloatField(null=True, blank=True)
+    skewness_light_level = models.FloatField(null=True, blank=True)
+    kurtosis_light_level = models.FloatField(null=True, blank=True)
+    light_level_distribution = models.JSONField(default=dict)
 
     # Triumph Score Statistics
     avg_triumph_score = models.FloatField(default=0)
+    stddev_triumph_score = models.FloatField(default=0)
+    triumph_score_distribution = models.JSONField(default=dict)
 
-    # Class Distribution (JSON)
+    # Class Distribution
     titan_count = models.IntegerField(default=0)
     hunter_count = models.IntegerField(default=0)
     warlock_count = models.IntegerField(default=0)
+    class_statistics = models.JSONField(default=dict)
+
+    # Play Time Statistics (hours)
+    avg_play_time_hours = models.FloatField(default=0)
+    play_time_distribution = models.JSONField(default=dict)
 
     # Metadata
     total_players = models.IntegerField(default=0)
     total_characters = models.IntegerField(default=0)
-    last_updated = models.DateTimeField(auto_now=True)
-
-    @classmethod
-    def get_instance(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj</code></pre>
+    last_updated = models.DateTimeField(auto_now=True)</code></pre>
                             </div>
                         </div>
                     </div>
@@ -1020,7 +1044,7 @@ class BungieUser(AbstractBaseUser):
                             <div class="hypothesis-header">
                                 <span class="hypothesis-label">Research Question</span>
                             </div>
-                            <p class="hypothesis-question">"Titan, Hunter, Warlock 간에 평균 전투력 차이가 있는가?"</p>
+                            <p class="hypothesis-question">"세 클래스 간에 평균 전투력 차이가 있는가?"</p>
                         </div>
                         <div class="hypothesis-steps">
                             <div class="hypothesis-step">
@@ -1040,21 +1064,34 @@ class BungieUser(AbstractBaseUser):
                             <div class="code-header">
                                 <span class="code-lang">Python</span>
                             </div>
-                            <pre><code class="language-python">from scipy import stats
+                            <pre><code class="language-python">from scipy import stats as scipy_stats
+import numpy as np
 
-# 클래스별 전투력 데이터 그룹화
-titan_light = characters.filter(class_type=0).values_list('light_level', flat=True)
-hunter_light = characters.filter(class_type=1).values_list('light_level', flat=True)
-warlock_light = characters.filter(class_type=2).values_list('light_level', flat=True)
+def class_light_level_anova() -> dict:
+    """클래스별 빛 레벨 차이 검정 (One-way ANOVA)"""
 
-# One-way ANOVA 수행
-f_stat, p_value = stats.f_oneway(titan_light, hunter_light, warlock_light)
+    # 클래스별 빛 레벨 데이터 수집
+    titan_levels = list(DestinyCharacter.objects.filter(
+        class_type=0, light_level__gt=0
+    ).values_list('light_level', flat=True))
+    hunter_levels = list(DestinyCharacter.objects.filter(
+        class_type=1, light_level__gt=0
+    ).values_list('light_level', flat=True))
+    warlock_levels = list(DestinyCharacter.objects.filter(
+        class_type=2, light_level__gt=0
+    ).values_list('light_level', flat=True))
 
-# 결과 해석
-if p_value < 0.05:
-    result = "클래스 간 유의미한 차이가 있음"
-else:
-    result = "클래스 간 유의미한 차이가 없음"</code></pre>
+    # ANOVA 검정 수행
+    f_stat, p_value = scipy_stats.f_oneway(
+        titan_levels, hunter_levels, warlock_levels
+    )
+
+    return {
+        'f_statistic': round(float(f_stat), 4),
+        'p_value': round(float(p_value), 6),
+        'significant': p_value < 0.05,
+        'conclusion': 'Reject H0' if p_value < 0.05 else 'Fail to reject H0',
+    }</code></pre>
                         </div>
                     </div>
                 </div>
@@ -1186,33 +1223,42 @@ else:
                         <div class="code-header">
                             <span class="code-lang">JavaScript</span>
                         </div>
-                        <pre><code class="language-javascript">new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['1780', '1790', '1800', '1810', '1820'],
-        datasets: [{
-            label: 'Players',
-            data: [45, 120, 280, 350, 180],
-            backgroundColor: 'rgba(33, 150, 243, 0.6)',
-        }]
-    },
-    options: {
-        plugins: {
-            annotation: {
-                annotations: {
-                    meanLine: {
-                        type: 'line',
-                        xMin: 2.5,
-                        xMax: 2.5,
-                        borderColor: 'rgba(255, 99, 132, 0.9)',
-                        borderDash: [6, 4],
-                        label: { content: 'Mean' }
-                    }
-                }
-            }
-        }
+                        <pre><code class="language-javascript">function createOrUpdateChart(chartInstance, canvasId, data, userValue,
+                              baseColor, highlightColor, bucketSize, statsObj) {
+    const ctx = document.getElementById(canvasId);
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+
+    // 통계선 annotation 생성
+    const annotations = {};
+    if (statsObj.mean !== null) {
+        annotations.meanLine = {
+            type: 'line',
+            xMin: valueToIndex(statsObj.mean),
+            xMax: valueToIndex(statsObj.mean),
+            borderColor: 'rgba(255, 99, 132, 0.9)',
+            borderWidth: 2,
+            borderDash: [6, 4]
+        };
     }
-});</code></pre>
+    if (statsObj.median !== null) {
+        annotations.medianLine = {
+            type: 'line',
+            xMin: valueToIndex(statsObj.median),
+            xMax: valueToIndex(statsObj.median),
+            borderColor: 'rgba(76, 175, 80, 0.9)',
+            borderWidth: 2,
+        };
+    }
+
+    return new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets: [{ data: values, fill: true }] },
+        options: {
+            plugins: { annotation: { annotations } }
+        }
+    });
+}</code></pre>
                     </div>
                 </div>
 
@@ -1229,33 +1275,42 @@ else:
                         <div class="code-header">
                             <span class="code-lang">JavaScript</span>
                         </div>
-                        <pre><code class="language-javascript">Plotly.newPlot('boxplot', [
-    {
-        y: titanLightLevels,
-        name: 'Titan',
-        type: 'box',
-        marker: { color: '#ef5350' },
-        boxmean: true,
-    },
-    {
-        y: hunterLightLevels,
-        name: 'Hunter',
-        type: 'box',
-        marker: { color: '#42a5f5' },
-        boxmean: true,
-    },
-    {
-        y: warlockLightLevels,
-        name: 'Warlock',
-        type: 'box',
-        marker: { color: '#ffee58' },
-        boxmean: true,
-    }
-], {
-    title: 'Light Level by Class',
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-});</code></pre>
+                        <pre><code class="language-javascript">// API에서 ANOVA 데이터 로드
+fetch('/api/statistics/class-comparison/')
+    .then(response => response.json())
+    .then(data => {
+        const boxplotData = data.boxplot_data;
+
+        const traces = [
+            {
+                y: boxplotData.titan,
+                name: 'Titan',
+                type: 'box',
+                marker: { color: '#ef5350' },
+                boxmean: true,
+            },
+            {
+                y: boxplotData.hunter,
+                name: 'Hunter',
+                type: 'box',
+                marker: { color: '#42a5f5' },
+                boxmean: true,
+            },
+            {
+                y: boxplotData.warlock,
+                name: 'Warlock',
+                type: 'box',
+                marker: { color: '#ffee58' },
+                boxmean: true,
+            },
+        ];
+
+        Plotly.newPlot('boxplot-chart', traces, {
+            title: { text: 'Light Level by Class' },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+        });
+    });</code></pre>
                     </div>
                 </div>
 
@@ -1518,7 +1573,7 @@ else:
                         <div class="achievement-card">
                             <div class="achievement-icon">
                                 <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.92 6-4.68 7.28l1.16 1.78C20.08 19.37 22 15.92 22 12c0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V3.03c-4.95.5-8.89 4.76-8.89 9.97 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-1.76-1.08A7.946 7.946 0 0112 19z"/>
+                                    <path d="M7 2v11h3v9l7-12h-4l4-8z"/>
                                 </svg>
                             </div>
                             <h4>성능</h4>
