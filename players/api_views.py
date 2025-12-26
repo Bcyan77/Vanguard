@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from django.utils import timezone
 
-from .models import DestinyPlayer, GlobalStatisticsCache
+from .models import GlobalStatisticsCache
 from .serializers import (
     DestinyPlayerListSerializer, DestinyPlayerDetailSerializer,
     PlayerSearchResultSerializer
@@ -19,7 +19,16 @@ from .bungie_api import (
     get_platform_info,
     get_activity_name,
 )
-from .services import sync_player_from_api, refresh_global_statistics
+from .services import (
+    sync_player_from_api,
+    refresh_global_statistics,
+    get_leaderboard,
+    calculate_badges,
+    get_radar_chart_data,
+    get_user_rank_in_leaderboard,
+    BADGES,
+)
+from .models import DestinyPlayer
 from .statistics_service import (
     class_light_level_anova,
     light_triumph_correlation,
@@ -368,4 +377,76 @@ class StatisticsHypothesisTestsAPIView(APIView):
                 'generated_at': timezone.now().isoformat(),
             },
             'tests': all_tests,
+        })
+
+
+class LeaderboardAPIView(APIView):
+    """
+    리더보드 API - 전체 공개
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get leaderboard",
+        description="Get top players leaderboard by category (light_level, triumph_score, play_time).",
+        parameters=[
+            OpenApiParameter(
+                name='category',
+                type=str,
+                required=False,
+                description='Leaderboard category: light_level (default), triumph_score, play_time'
+            ),
+            OpenApiParameter(
+                name='limit',
+                type=int,
+                required=False,
+                description='Number of players to return (default: 10, max: 100)'
+            ),
+        ],
+        responses={200: dict},
+        tags=['Statistics']
+    )
+    def get(self, request):
+        category = request.GET.get('category', 'light_level')
+        try:
+            limit = min(int(request.GET.get('limit', 10)), 100)
+        except ValueError:
+            limit = 10
+
+        valid_categories = ['light_level', 'triumph_score', 'play_time']
+        if category not in valid_categories:
+            return Response(
+                {'error': f'Invalid category. Must be one of: {", ".join(valid_categories)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        leaderboard = get_leaderboard(category, limit)
+
+        # 로그인한 사용자의 순위 포함
+        user_rank = None
+        if request.user.is_authenticated:
+            user_rank = get_user_rank_in_leaderboard(request.user, category)
+
+        return Response({
+            'category': category,
+            'leaderboard': leaderboard,
+            'user_rank': user_rank,
+        })
+
+
+class BadgesAPIView(APIView):
+    """
+    배지 정보 API
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        summary="Get all badge definitions",
+        description="Get all available badge definitions.",
+        responses={200: dict},
+        tags=['Gamification']
+    )
+    def get(self, request):
+        return Response({
+            'badges': list(BADGES.values()),
         })

@@ -419,7 +419,42 @@ def refresh_global_statistics():
         }
     )
 
+    # 파워캡 업데이트 (별도로 처리하여 API 호출 실패 시에도 통계는 저장됨)
+    _update_power_cap(cache)
+
     return cache
+
+
+def _update_power_cap(cache):
+    """
+    Bungie API에서 현재 시즌 파워캡을 조회하여 캐시에 저장.
+    API 호출 실패 시에도 기존 값 유지.
+    """
+    from .bungie_api import get_current_power_cap, get_power_cap_from_settings
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # 방법 1: Settings API에서 직접 조회
+    power_cap = get_power_cap_from_settings()
+
+    # 방법 2: Manifest에서 조회 (fallback)
+    if not power_cap:
+        result = get_current_power_cap()
+        if result:
+            power_cap = result.get('power_cap')
+            season_hash = result.get('season_hash', '')
+            if power_cap:
+                cache.current_power_cap = power_cap
+                cache.power_cap_season_hash = season_hash
+                cache.save(update_fields=['current_power_cap', 'power_cap_season_hash'])
+                logger.info(f"Updated power cap to {power_cap} (season: {season_hash})")
+                return
+
+    if power_cap:
+        cache.current_power_cap = power_cap
+        cache.save(update_fields=['current_power_cap'])
+        logger.info(f"Updated power cap to {power_cap}")
 
 
 def get_user_statistics_position(user):
@@ -482,3 +517,357 @@ def get_user_statistics_position(user):
             'top_percent': round(100 - playtime_percentile, 1),
         },
     }
+
+
+# ============================================================
+# Gamification 관련 함수
+# ============================================================
+
+# 기본 배지 정의 (max_power 제외)
+_BASE_BADGES = {
+    # 순위 기반 배지
+    'brightest': {
+        'id': 'brightest',
+        'name': 'Brightest',
+        'description': 'Light Level Top 10%',
+        'icon': '⭐',
+        'color': '#FFD700',
+        'category': 'rank',
+    },
+    'veteran': {
+        'id': 'veteran',
+        'name': 'Veteran',
+        'description': 'Light Level Top 25%',
+        'icon': '⭐',
+        'color': '#4CAF50',
+        'category': 'rank',
+    },
+    'rising_star': {
+        'id': 'rising_star',
+        'name': 'Rising Star',
+        'description': 'Light Level Top 50%',
+        'icon': '⭐',
+        'color': '#2196F3',
+        'category': 'rank',
+    },
+    'collector': {
+        'id': 'collector',
+        'name': 'Collector',
+        'description': 'Triumph Score Top 10%',
+        'icon': '🏆',
+        'color': '#FFD700',
+        'category': 'rank',
+    },
+    'dedicated': {
+        'id': 'dedicated',
+        'name': 'Dedicated',
+        'description': 'Play Time Top 10%',
+        'icon': '⏱️',
+        'color': '#FFD700',
+        'category': 'rank',
+    },
+    # 달성 기반 배지
+    'trinity': {
+        'id': 'trinity',
+        'name': 'Trinity',
+        'description': 'Own all 3 classes',
+        'icon': '🔺',
+        'color': '#9C27B0',
+        'category': 'achievement',
+    },
+    'balanced': {
+        'id': 'balanced',
+        'name': 'Balanced',
+        'description': 'All characters within 50 Light Level',
+        'icon': '⚖️',
+        'color': '#00BCD4',
+        'category': 'achievement',
+    },
+}
+
+
+def get_cached_power_cap():
+    """캐시된 파워 캡 값 조회. 없으면 기본값 반환."""
+    try:
+        cache = GlobalStatisticsCache.objects.get(pk=1)
+        return cache.current_power_cap
+    except GlobalStatisticsCache.DoesNotExist:
+        return 2000  # 기본값
+
+
+def get_badge_definitions(power_cap=None):
+    """
+    배지 정의를 동적으로 생성.
+    max_power 배지의 description이 현재 파워캡에 따라 변경됨.
+
+    Args:
+        power_cap: 파워캡 값 (None이면 캐시에서 조회)
+
+    Returns:
+        dict: 배지 정의
+    """
+    if power_cap is None:
+        power_cap = get_cached_power_cap()
+
+    return _BASE_BADGES.copy()
+
+
+# 하위 호환성을 위한 BADGES 변수 (동적으로 생성)
+def _get_badges():
+    return get_badge_definitions()
+
+
+# API 등에서 BADGES를 직접 참조할 때를 위한 프로퍼티
+class _BadgesProxy:
+    """BADGES 상수를 동적으로 조회하는 프록시 클래스."""
+
+    def __getitem__(self, key):
+        return get_badge_definitions()[key]
+
+    def __iter__(self):
+        return iter(get_badge_definitions())
+
+    def values(self):
+        return get_badge_definitions().values()
+
+    def keys(self):
+        return get_badge_definitions().keys()
+
+    def items(self):
+        return get_badge_definitions().items()
+
+    def get(self, key, default=None):
+        return get_badge_definitions().get(key, default)
+
+
+BADGES = _BadgesProxy()
+
+
+def get_leaderboard(category='light_level', limit=10):
+    """
+    리더보드 데이터 조회.
+
+    Args:
+        category: 'light_level', 'triumph_score', 'play_time' 중 하나
+        limit: 표시할 플레이어 수 (기본 10)
+
+    Returns:
+        list of dict: [{rank, player_id, display_name, platform, value}, ...]
+    """
+    if category == 'light_level':
+        # 플레이어별 최고 라이트 레벨
+        players = DestinyPlayer.objects.prefetch_related('characters').all()
+        player_data = []
+        for player in players:
+            max_light = player.characters.aggregate(max_light=Max('light_level'))['max_light']
+            if max_light and max_light > 0:
+                player_data.append({
+                    'player_id': player.id,
+                    'membership_id': player.membership_id,
+                    'membership_type': player.membership_type,
+                    'display_name': str(player),
+                    'platform': player.get_platform_display(),
+                    'value': max_light,
+                })
+        player_data.sort(key=lambda x: x['value'], reverse=True)
+
+    elif category == 'triumph_score':
+        players = DestinyPlayer.objects.filter(
+            active_triumph_score__gt=0
+        ).order_by('-active_triumph_score')[:limit]
+
+        player_data = [{
+            'player_id': p.id,
+            'membership_id': p.membership_id,
+            'membership_type': p.membership_type,
+            'display_name': str(p),
+            'platform': p.get_platform_display(),
+            'value': p.active_triumph_score,
+        } for p in players]
+
+    elif category == 'play_time':
+        # 플레이어별 총 플레이 시간
+        players = DestinyPlayer.objects.prefetch_related('characters').all()
+        player_data = []
+        for player in players:
+            total_minutes = player.characters.aggregate(total=Sum('minutes_played_total'))['total']
+            if total_minutes and total_minutes > 0:
+                player_data.append({
+                    'player_id': player.id,
+                    'membership_id': player.membership_id,
+                    'membership_type': player.membership_type,
+                    'display_name': str(player),
+                    'platform': player.get_platform_display(),
+                    'value': round(total_minutes / 60.0, 1),  # 시간 단위
+                })
+        player_data.sort(key=lambda x: x['value'], reverse=True)
+
+    else:
+        return []
+
+    # 순위 추가 및 limit 적용
+    result = []
+    for idx, data in enumerate(player_data[:limit], 1):
+        data['rank'] = idx
+        result.append(data)
+
+    return result
+
+
+def calculate_badges(player):
+    """
+    플레이어의 배지 계산.
+
+    Args:
+        player: DestinyPlayer 인스턴스
+
+    Returns:
+        list of dict: 획득한 배지 목록
+    """
+    earned_badges = []
+
+    # 통계 캐시 가져오기
+    try:
+        cache = GlobalStatisticsCache.objects.get(pk=1)
+    except GlobalStatisticsCache.DoesNotExist:
+        cache = refresh_global_statistics()
+
+    # 플레이어 데이터
+    characters = player.characters.all()
+    if not characters:
+        return earned_badges
+
+    max_light = max((c.light_level for c in characters), default=0)
+    triumph_score = player.active_triumph_score
+    total_minutes = sum(c.minutes_played_total for c in characters)
+    play_time_hours = total_minutes / 60.0
+
+    # 백분위 계산
+    light_z = calculate_z_score(max_light, cache.avg_light_level, cache.stddev_light_level)
+    triumph_z = calculate_z_score(triumph_score, cache.avg_triumph_score, cache.stddev_triumph_score)
+    playtime_z = calculate_z_score(play_time_hours, cache.avg_play_time_hours, cache.stddev_play_time_hours)
+
+    light_percentile = calculate_percentile_from_zscore(light_z)
+    triumph_percentile = calculate_percentile_from_zscore(triumph_z)
+    playtime_percentile = calculate_percentile_from_zscore(playtime_z)
+
+    # 순위 기반 배지
+    if light_percentile >= 90:
+        earned_badges.append(BADGES['brightest'])
+    elif light_percentile >= 75:
+        earned_badges.append(BADGES['veteran'])
+    elif light_percentile >= 50:
+        earned_badges.append(BADGES['rising_star'])
+
+    if triumph_percentile >= 90:
+        earned_badges.append(BADGES['collector'])
+
+    if playtime_percentile >= 90:
+        earned_badges.append(BADGES['dedicated'])
+
+    # 달성 기반 배지
+    class_types = set(c.class_type for c in characters)
+    if len(class_types) == 3:
+        earned_badges.append(BADGES['trinity'])
+
+    # Balanced 배지: 모든 캐릭터 라이트 레벨 차이 50 이하
+    light_levels = [c.light_level for c in characters if c.light_level > 0]
+    if len(light_levels) >= 2:
+        if max(light_levels) - min(light_levels) <= 50:
+            earned_badges.append(BADGES['balanced'])
+
+    return earned_badges
+
+
+def get_radar_chart_data(player):
+    """
+    레이더 차트용 정규화 데이터 생성.
+
+    Args:
+        player: DestinyPlayer 인스턴스
+
+    Returns:
+        dict: {labels, values, max_value}
+    """
+    # 통계 캐시
+    try:
+        cache = GlobalStatisticsCache.objects.get(pk=1)
+    except GlobalStatisticsCache.DoesNotExist:
+        cache = refresh_global_statistics()
+
+    characters = player.characters.all()
+    if not characters:
+        return {
+            'labels': ['Light Level', 'Triumph', 'Play Time', 'Characters', 'Versatility'],
+            'values': [0, 0, 0, 0, 0],
+            'max_value': 100,
+        }
+
+    # 플레이어 데이터
+    max_light = max((c.light_level for c in characters), default=0)
+    triumph_score = player.active_triumph_score
+    total_minutes = sum(c.minutes_played_total for c in characters)
+    play_time_hours = total_minutes / 60.0
+    char_count = len(characters)
+    class_types = set(c.class_type for c in characters)
+    versatility = len(class_types)
+
+    # 백분위 계산 (0-100 스케일)
+    light_z = calculate_z_score(max_light, cache.avg_light_level, cache.stddev_light_level)
+    triumph_z = calculate_z_score(triumph_score, cache.avg_triumph_score, cache.stddev_triumph_score)
+    playtime_z = calculate_z_score(play_time_hours, cache.avg_play_time_hours, cache.stddev_play_time_hours)
+
+    light_percentile = min(100, max(0, calculate_percentile_from_zscore(light_z)))
+    triumph_percentile = min(100, max(0, calculate_percentile_from_zscore(triumph_z)))
+    playtime_percentile = min(100, max(0, calculate_percentile_from_zscore(playtime_z)))
+
+    # 캐릭터 수 (1-3 → 33/66/100)
+    char_score = min(100, (char_count / 3) * 100)
+
+    # Versatility (클래스 다양성, 1-3 → 33/66/100)
+    versatility_score = min(100, (versatility / 3) * 100)
+
+    return {
+        'labels': ['Light Level', 'Triumph', 'Play Time', 'Characters', 'Versatility'],
+        'values': [
+            round(light_percentile, 1),
+            round(triumph_percentile, 1),
+            round(playtime_percentile, 1),
+            round(char_score, 1),
+            round(versatility_score, 1),
+        ],
+        'max_value': 100,
+    }
+
+
+def get_user_rank_in_leaderboard(user, category='light_level'):
+    """
+    사용자의 리더보드 내 순위 조회.
+
+    Args:
+        user: 현재 로그인한 사용자
+        category: 'light_level', 'triumph_score', 'play_time' 중 하나
+
+    Returns:
+        dict: {rank, total, value} or None
+    """
+    try:
+        player = DestinyPlayer.objects.get(
+            membership_id=user.bungie_membership_id,
+            membership_type=user.bungie_membership_type
+        )
+    except DestinyPlayer.DoesNotExist:
+        return None
+
+    # 전체 리더보드 데이터
+    full_leaderboard = get_leaderboard(category, limit=9999)
+
+    for entry in full_leaderboard:
+        if entry['membership_id'] == player.membership_id:
+            return {
+                'rank': entry['rank'],
+                'total': len(full_leaderboard),
+                'value': entry['value'],
+            }
+
+    return None

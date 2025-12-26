@@ -249,10 +249,10 @@ def light_triumph_correlation() -> dict:
             ),
             'conclusion': 'Reject H0' if significant else 'Fail to reject H0',
         },
-        # 시각화용 데이터 (산점도)
+        # 시각화용 데이터 (산점도) - light_level 기준 정렬
         'scatter_data': {
-            'x': light_levels,
-            'y': triumph_scores,
+            'x': [pair[0] for pair in sorted(zip(light_levels, triumph_scores), key=lambda p: p[0])],
+            'y': [pair[1] for pair in sorted(zip(light_levels, triumph_scores), key=lambda p: p[0])],
             'x_label': '빛 레벨 (Light Level)',
             'y_label': '승리 점수 (Triumph Score)',
         },

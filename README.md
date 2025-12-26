@@ -2,6 +2,8 @@
 
 A web service for Destiny 2 players to create and join fireteams using Bungie.net OAuth authentication.
 
+**Live Site**: https://vanguard-lfg.com
+
 ## Features
 
 - Bungie.net OAuth authentication
@@ -44,7 +46,7 @@ A web service for Destiny 2 players to create and join fireteams using Bungie.ne
 
 ```bash
 # Clone the repository
-cd c:\Projects\bungie-party-recruitment
+cd c:\Projects\Vanguard
 
 # Copy environment template
 cp .env.example .env
@@ -117,7 +119,7 @@ docker-compose down
 ## Project Structure
 
 ```
-bungie-party-recruitment/
+Vanguard/
 ├── docker-compose.yml          # Docker orchestration
 ├── Dockerfile                  # Docker image definition
 ├── requirements.txt            # Python dependencies
@@ -208,4 +210,43 @@ Every time you restart ngrok, you'll get a new URL. Remember to:
 docker-compose down
 rm db.sqlite3
 docker-compose run web python manage.py migrate
+```
+
+## Production Deployment (GCP)
+
+### Infrastructure
+| Component | Value |
+|-----------|-------|
+| Domain | vanguard-lfg.com |
+| IP | 34.64.113.204 |
+| GCP Project | vanguard-482410 |
+| Instance | vanguard (e2-small) |
+| Region | asia-northeast3-a (Seoul) |
+| SSL | Let's Encrypt (auto-renewal) |
+
+### Deploy Updates
+```bash
+# One-liner deployment
+ssh vanguard-gcp "cd ~/Vanguard && git pull origin main && sg docker -c 'docker-compose up -d --build'"
+```
+
+### Server Management
+```bash
+# SSH access
+ssh vanguard-gcp
+
+# View logs
+ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose logs -f'"
+
+# Restart services
+ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose restart'"
+
+# Check status
+ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose ps'"
+```
+
+### Bungie OAuth Configuration
+Production redirect URL:
+```
+https://vanguard-lfg.com/accounts/callback/
 ```

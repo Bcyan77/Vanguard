@@ -202,6 +202,10 @@ class GlobalStatisticsCache(models.Model):
     kurtosis_play_time_hours = models.FloatField(null=True, blank=True)
     play_time_distribution = models.JSONField(default=dict)
 
+    # Season Power Cap (for Max Power badge)
+    current_power_cap = models.IntegerField(default=2000)
+    power_cap_season_hash = models.CharField(max_length=50, blank=True, default='')
+
     # Metadata
     total_players = models.IntegerField(default=0)
     total_characters = models.IntegerField(default=0)

@@ -19,7 +19,8 @@
         width: 100px;
         height: 100px;
         border-radius: 50%;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: transparent;
+        border: 3px solid #FFD700;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -54,7 +55,7 @@
     .stat-value {
         font-size: 2.5rem;
         font-weight: bold;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -89,7 +90,8 @@
 
     .party-item:hover {
         transform: translateX(4px);
-        border-color: rgba(102, 126, 234, 0.5);
+        border-color: rgba(255, 215, 0, 0.4);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.15);
     }
 
     .party-item-header {

@@ -20,7 +20,17 @@ from .bungie_api import (
     get_activity_name,
 )
 from .models import GlobalStatisticsCache
-from .services import sync_player_from_api, get_user_statistics_position, refresh_global_statistics, get_raw_player_data
+from .services import (
+    sync_player_from_api,
+    get_user_statistics_position,
+    refresh_global_statistics,
+    get_raw_player_data,
+    get_leaderboard,
+    calculate_badges,
+    get_radar_chart_data,
+    get_user_rank_in_leaderboard,
+)
+from .models import DestinyPlayer
 
 
 def player_search(request):
@@ -57,6 +67,34 @@ def player_search(request):
         'result_count': len(results),
     }
     return render(request, 'players/search.html', context)
+
+
+def leaderboard(request):
+    """
+    Display leaderboard page with top players by:
+    - Light Level
+    - Triumph Score
+    - Play Time
+    """
+    leaderboard_light = get_leaderboard('light_level', 10)
+    leaderboard_triumph = get_leaderboard('triumph_score', 10)
+    leaderboard_playtime = get_leaderboard('play_time', 10)
+
+    user_ranks = None
+    if request.user.is_authenticated:
+        user_ranks = {
+            'light_level': get_user_rank_in_leaderboard(request.user, 'light_level'),
+            'triumph_score': get_user_rank_in_leaderboard(request.user, 'triumph_score'),
+            'play_time': get_user_rank_in_leaderboard(request.user, 'play_time'),
+        }
+
+    context = {
+        'leaderboard_light': leaderboard_light,
+        'leaderboard_triumph': leaderboard_triumph,
+        'leaderboard_playtime': leaderboard_playtime,
+        'user_ranks': user_ranks,
+    }
+    return render(request, 'players/leaderboard.html', context)
 
 
 def player_statistics(request):
@@ -107,6 +145,20 @@ def player_statistics(request):
     # 클라이언트 사이드 필터링용 원본 데이터
     raw_player_data = get_raw_player_data() if stats_cache and stats_cache.total_players > 0 else []
 
+    # 로그인 사용자의 레이더 차트 및 배지
+    user_radar_data = None
+    user_badges = []
+    if request.user.is_authenticated:
+        try:
+            user_player = DestinyPlayer.objects.get(
+                membership_id=request.user.bungie_membership_id,
+                membership_type=request.user.bungie_membership_type
+            )
+            user_radar_data = get_radar_chart_data(user_player)
+            user_badges = calculate_badges(user_player)
+        except DestinyPlayer.DoesNotExist:
+            pass
+
     context = {
         # 통계 데이터
         'stats': stats_cache,
@@ -118,6 +170,8 @@ def player_statistics(request):
         'playtime_distribution_json': json.dumps(stats_cache.play_time_distribution) if stats_cache else '{}',
         # 클라이언트 필터링용 원본 데이터
         'raw_player_data_json': json.dumps(raw_player_data),
+        'user_radar_data_json': json.dumps(user_radar_data) if user_radar_data else '{}',
+        'user_badges': user_badges,
         # 개발 모드 플래그
         'debug': settings.DEBUG,
     }
@@ -222,6 +276,19 @@ def player_detail(request, membership_type, membership_id):
     # Platform info
     platform = get_platform_info(membership_type)
 
+    # Gamification 데이터 (DB에 저장된 플레이어 정보 기반)
+    badges = []
+    radar_data = None
+    try:
+        db_player = DestinyPlayer.objects.get(
+            membership_id=membership_id,
+            membership_type=membership_type
+        )
+        badges = calculate_badges(db_player)
+        radar_data = get_radar_chart_data(db_player)
+    except DestinyPlayer.DoesNotExist:
+        pass
+
     context = {
         'user_info': user_info,
         'platform': platform,
@@ -232,5 +299,8 @@ def player_detail(request, membership_type, membership_id):
         'lifetime_score': lifetime_score,
         'metrics': metrics_data,
         'recent_activities': recent_activities,
+        # Gamification
+        'badges': badges,
+        'radar_data_json': json.dumps(radar_data) if radar_data else '{}',
     }
     return render(request, 'players/detail.html', context)

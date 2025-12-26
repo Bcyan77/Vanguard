@@ -354,3 +354,123 @@ def get_clan_members(group_id, page=1):
     except Exception as e:
         logger.error(f"Get clan members failed: {e}")
         return [], False, str(e)
+
+
+def get_current_power_cap():
+    """
+    Bungie Manifest API에서 현재 시즌의 파워 캡을 조회.
+
+    Settings API를 통해 현재 시즌의 파워 캡 정보를 가져옵니다.
+
+    Returns:
+        dict: {'power_cap': int, 'season_hash': str} or None
+    """
+    try:
+        # Destiny2 Settings API에서 현재 시즌 정보 가져오기
+        response = make_public_api_request('/Destiny2/Manifest/')
+
+        if not response:
+            logger.warning("Failed to get Destiny manifest")
+            return None
+
+        # Manifest에서 Settings 정보 가져오기
+        settings_response = make_public_api_request('/Settings/')
+
+        if settings_response and settings_response.get('destiny2CoreSettings'):
+            core_settings = settings_response['destiny2CoreSettings']
+            current_season_hash = core_settings.get('currentSeasonHash')
+
+            if current_season_hash:
+                # 시즌 정의에서 파워 캡 정보 조회
+                # Manifest의 DestinySeasonDefinition에서 조회
+                world_content_paths = response.get('jsonWorldComponentContentPaths', {})
+                en_paths = world_content_paths.get('en', {})
+                season_path = en_paths.get('DestinySeasonDefinition')
+
+                if season_path:
+                    season_url = f"{BUNGIE_NET_URL}{season_path}"
+                    try:
+                        season_response = requests.get(season_url, timeout=30)
+                        season_response.raise_for_status()
+                        season_data = season_response.json()
+
+                        # 현재 시즌 해시로 파워 캡 찾기
+                        current_season = season_data.get(str(current_season_hash), {})
+                        if current_season:
+                            # seasonPass에서 prestigeProgressionHash를 통해 파워 캡 확인
+                            # 또는 artifact의 powerCap 필드 사용
+                            # 시즌마다 구조가 다를 수 있으므로 여러 경로 시도
+                            power_cap = None
+
+                            # 방법 1: seasonPass의 power cap
+                            season_pass = current_season.get('seasonPass', {})
+                            if 'powerCapHash' in current_season:
+                                power_cap_hash = current_season.get('powerCapHash')
+                                # DestinyPowerCapDefinition에서 조회
+                                power_cap_path = en_paths.get('DestinyPowerCapDefinition')
+                                if power_cap_path:
+                                    cap_url = f"{BUNGIE_NET_URL}{power_cap_path}"
+                                    cap_response = requests.get(cap_url, timeout=30)
+                                    cap_response.raise_for_status()
+                                    cap_data = cap_response.json()
+                                    cap_def = cap_data.get(str(power_cap_hash), {})
+                                    power_cap = cap_def.get('powerCap')
+
+                            # 방법 2: displayProperties에서 추출 (fallback)
+                            if not power_cap:
+                                display_props = current_season.get('displayProperties', {})
+                                description = display_props.get('description', '')
+                                # 설명에서 파워 레벨 숫자 추출 시도
+                                import re
+                                match = re.search(r'(\d{4})\s*(?:Power|Light)', description)
+                                if match:
+                                    power_cap = int(match.group(1))
+
+                            if power_cap:
+                                logger.info(f"Current season power cap: {power_cap}")
+                                return {
+                                    'power_cap': power_cap,
+                                    'season_hash': str(current_season_hash)
+                                }
+
+                    except requests.exceptions.RequestException as e:
+                        logger.error(f"Failed to download season definitions: {e}")
+
+        # 실패 시 기본값 반환
+        logger.warning("Could not determine current power cap, using fallback")
+        return None
+
+    except Exception as e:
+        logger.error(f"Get current power cap failed: {e}")
+        return None
+
+
+def get_power_cap_from_settings():
+    """
+    Bungie Settings API에서 파워 캡 정보를 직접 조회하는 간단한 방법.
+
+    Returns:
+        int: 현재 시즌의 소프트 캡/하드 캡 or None
+    """
+    try:
+        # Destiny2 Settings에서 currentSeasonRewardPowerCap 또는 유사 필드 확인
+        response = make_public_api_request('/Settings/')
+
+        if response and 'destiny2CoreSettings' in response:
+            settings = response['destiny2CoreSettings']
+
+            # 다양한 필드 시도
+            power_cap = settings.get('currentSeasonRewardPowerCap')
+            if power_cap:
+                return power_cap
+
+            # pinnacle cap 확인
+            pinnacle_cap = settings.get('currentSeasonPinnaclePowerCap')
+            if pinnacle_cap:
+                return pinnacle_cap
+
+        return None
+
+    except Exception as e:
+        logger.error(f"Get power cap from settings failed: {e}")
+        return None

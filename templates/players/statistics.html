@@ -11,7 +11,7 @@
 
     .page-header h1 {
         font-size: 2.5rem;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -38,7 +38,7 @@
 
     .stats-section-header h2 {
         font-size: 1.5rem;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -87,7 +87,7 @@
     }
 
     .stat-card .stat-value.gradient {
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -344,7 +344,8 @@
 
     .filter-input-group input[type="number"]:focus {
         outline: none;
-        border-color: rgba(102, 126, 234, 0.5);
+        border-color: #FFD700;
+        box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.1), 0 0 12px rgba(255, 215, 0, 0.15);
     }
 
     .filter-separator {
@@ -366,7 +367,7 @@
     }
 
     .filter-count strong {
-        color: #667eea;
+        color: #FFD700;
     }
 
     .btn-reset {
@@ -394,14 +395,49 @@
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
+    .analysis-section summary {
+        cursor: pointer;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .analysis-section summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .analysis-section summary h2 {
+        display: inline;
+        margin: 0;
+    }
+
+    .analysis-section .toggle-icon {
+        font-size: 0.9rem;
+        transition: transform 0.2s;
+        -webkit-text-fill-color: #888;
+    }
+
+    .analysis-section[open] .toggle-icon {
+        transform: rotate(180deg);
+    }
+
     .analysis-section h2 {
         font-size: 1.5rem;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         margin-bottom: 1rem;
         text-align: center;
+    }
+
+    .boring-note {
+        font-size: 0.8rem;
+        color: #666;
+        font-weight: normal;
+        -webkit-text-fill-color: #666;
     }
 
     .analysis-grid {
@@ -494,13 +530,13 @@
     }
 
     .stats-table .highlight {
-        color: #667eea;
+        color: #FFD700;
         font-weight: bold;
     }
 
     .interpretation-box {
-        background: rgba(102, 126, 234, 0.1);
-        border: 1px solid rgba(102, 126, 234, 0.3);
+        background: rgba(255, 215, 0, 0.1);
+        border: 1px solid rgba(255, 215, 0, 0.3);
         border-radius: 8px;
         padding: 1rem;
         margin-top: 1rem;
@@ -509,7 +545,7 @@
     }
 
     .interpretation-box strong {
-        color: #667eea;
+        color: #FFD700;
     }
 
     .plotly-chart {
@@ -612,6 +648,80 @@
 
     .legend-value {
         color: #b0b0b0;
+    }
+
+    /* User Profile Section */
+    .user-profile-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .user-profile-section {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .user-badges-card, .user-radar-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-badges-card h3, .user-radar-card h3 {
+        font-size: 1rem;
+        color: #b0b0b0;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .user-badges-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .user-badge-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        font-size: 0.875rem;
+    }
+
+    .user-badge-item .badge-icon {
+        font-size: 1rem;
+    }
+
+    .user-badge-item .badge-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .user-badge-item .badge-name {
+        font-weight: 500;
+    }
+
+    .user-badge-item .badge-desc {
+        font-size: 0.7rem;
+        color: #888;
+    }
+
+    .no-badges-msg {
+        color: #666;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+
+    .user-radar-container {
+        height: 220px;
     }
 </style>
 {% endblock %}
@@ -755,6 +865,37 @@
     </div>
     {% endif %}
 
+    <!-- User Profile Section (for logged in users) -->
+    {% if user_position %}
+    <div class="user-profile-section">
+        <!-- User Badges -->
+        <div class="user-badges-card">
+            <h3>Your Badges</h3>
+            <div class="user-badges-grid">
+                {% for badge in user_badges %}
+                <div class="user-badge-item" style="border-color: {{ badge.color }}40;">
+                    <span class="badge-icon">{{ badge.icon }}</span>
+                    <div class="badge-info">
+                        <span class="badge-name" style="color: {{ badge.color }};">{{ badge.name }}</span>
+                        <span class="badge-desc">{{ badge.description }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="no-badges-msg">Keep playing to earn badges!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- User Radar Chart -->
+        <div class="user-radar-card">
+            <h3>Your Profile</h3>
+            <div class="user-radar-container">
+                <canvas id="userRadarChart"></canvas>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Distribution Charts -->
     <div class="distribution-charts">
         <div class="chart-container">
@@ -815,8 +956,11 @@
 </div>
 
 <!-- Statistical Analysis Section -->
-<div class="analysis-section">
-    <h2>Statistical Analysis</h2>
+<details class="analysis-section">
+    <summary>
+        <h2>Statistical Analysis <span class="boring-note">(for nerds only 🤓)</span></h2>
+        <span class="toggle-icon">▼</span>
+    </summary>
     <p style="text-align: center; color: #888; margin-bottom: 1.5rem;">
         Hypothesis testing and correlation analysis based on player data
     </p>
@@ -916,7 +1060,7 @@
             <div id="scatter-chart" class="plotly-chart"></div>
         </div>
     </div>
-</div>
+</details>
 {% elif stats %}
 <div class="stats-section">
     <div class="no-data-message">
@@ -1210,9 +1354,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const backgroundColors = labels.map((_, i) => i === userIndex ? highlightColor : baseColor);
-        const borderColors = labels.map((_, i) => i === userIndex ? '#ffffff' : 'rgba(255, 255, 255, 0.1)');
-        const borderWidths = labels.map((_, i) => i === userIndex ? 3 : 1);
+        // 그라데이션 생성
+        const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, ctx.height || 200);
+        gradient.addColorStop(0, baseColor.replace('0.6', '0.8'));
+        gradient.addColorStop(1, baseColor.replace('0.6', '0.1'));
+
+        // 포인트 스타일 설정
+        const pointRadii = labels.map((_, i) => i === userIndex ? 6 : 0);
+        const pointBgColors = labels.map((_, i) => i === userIndex ? highlightColor : baseColor);
+        const pointBorderColors = labels.map((_, i) => i === userIndex ? '#ffffff' : 'transparent');
+        const pointBorderWidths = labels.map((_, i) => i === userIndex ? 2 : 0);
 
         // 통계 주석 생성
         const annotations = createStatsAnnotations(statsObj, labels, bucketSize);
@@ -1221,25 +1372,32 @@ document.addEventListener('DOMContentLoaded', function() {
             // 차트 업데이트
             chartInstance.data.labels = labels;
             chartInstance.data.datasets[0].data = values;
-            chartInstance.data.datasets[0].backgroundColor = backgroundColors;
-            chartInstance.data.datasets[0].borderColor = borderColors;
-            chartInstance.data.datasets[0].borderWidth = borderWidths;
+            chartInstance.data.datasets[0].pointRadius = pointRadii;
+            chartInstance.data.datasets[0].pointBackgroundColor = pointBgColors;
+            chartInstance.data.datasets[0].pointBorderColor = pointBorderColors;
+            chartInstance.data.datasets[0].pointBorderWidth = pointBorderWidths;
             chartInstance.options.plugins.annotation.annotations = annotations;
             chartInstance.update('none');
             return chartInstance;
         } else {
             // 새 차트 생성
             return new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
                         label: 'Players',
                         data: values,
-                        backgroundColor: backgroundColors,
-                        borderColor: borderColors,
-                        borderWidth: borderWidths,
-                        borderRadius: 4,
+                        fill: true,
+                        tension: 0.4,
+                        backgroundColor: gradient,
+                        borderColor: baseColor.replace('0.6', '1'),
+                        borderWidth: 2,
+                        pointRadius: pointRadii,
+                        pointBackgroundColor: pointBgColors,
+                        pointBorderColor: pointBorderColors,
+                        pointBorderWidth: pointBorderWidths,
+                        pointHoverRadius: 5,
                     }]
                 },
                 options: {
@@ -1265,7 +1423,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         y: {
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { font: { size: 10 } }
+                            ticks: { font: { size: 10 } },
+                            beginAtZero: true
                         }
                     }
                 }
@@ -1561,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         mode: 'markers',
                         type: 'scatter',
                         marker: {
-                            color: 'rgba(102, 126, 234, 0.5)',
+                            color: 'rgba(255, 215, 0, 0.5)',
                             size: 6,
                         },
                         name: 'Players',
@@ -1598,6 +1757,75 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('correlation-interpretation').innerHTML =
                 '<strong>Error:</strong> Failed to load analysis data.';
         });
+
+    // ========== User Radar Chart ==========
+    {% if user_position %}
+    const userRadarData = {{ user_radar_data_json|safe }};
+
+    if (userRadarData && userRadarData.labels && userRadarData.values) {
+        const userRadarCtx = document.getElementById('userRadarChart');
+        if (userRadarCtx) {
+            new Chart(userRadarCtx, {
+                type: 'radar',
+                data: {
+                    labels: userRadarData.labels,
+                    datasets: [{
+                        label: 'Your Stats',
+                        data: userRadarData.values,
+                        backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                        borderColor: 'rgba(255, 215, 0, 0.8)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#FFD700',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#FFD700',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20,
+                                color: '#888',
+                                backdropColor: 'transparent',
+                                font: { size: 9 },
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            angleLines: {
+                                color: 'rgba(255, 255, 255, 0.1)',
+                            },
+                            pointLabels: {
+                                color: '#b0b0b0',
+                                font: { size: 10 },
+                            },
+                        },
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#FFD700',
+                            bodyColor: '#fff',
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed.r.toFixed(1) + '%';
+                                }
+                            }
+                        },
+                    },
+                },
+            });
+        }
+    }
+    {% endif %}
 });
 </script>
 {% endif %}

@@ -12,4 +12,8 @@ urlpatterns = [
     path('statistics/correlation/', api_views.StatisticsCorrelationAPIView.as_view(), name='api_statistics_correlation'),
     path('statistics/distribution/', api_views.StatisticsDistributionAPIView.as_view(), name='api_statistics_distribution'),
     path('statistics/hypothesis-tests/', api_views.StatisticsHypothesisTestsAPIView.as_view(), name='api_statistics_hypothesis_tests'),
+
+    # Gamification API
+    path('statistics/leaderboard/', api_views.LeaderboardAPIView.as_view(), name='api_leaderboard'),
+    path('gamification/badges/', api_views.BadgesAPIView.as_view(), name='api_badges'),
 ]

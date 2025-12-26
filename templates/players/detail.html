@@ -15,7 +15,7 @@
     }
 
     .back-link:hover {
-        color: #667eea;
+        color: #FFD700;
     }
 
     .player-header {
@@ -92,7 +92,7 @@
     .stat-value {
         font-size: 2rem;
         font-weight: bold;
-        background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -103,7 +103,7 @@
         color: #fff;
         margin-bottom: 1.5rem;
         padding-bottom: 0.5rem;
-        border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+        border-bottom: 2px solid rgba(255, 215, 0, 0.3);
     }
 
     .characters-grid {
@@ -122,7 +122,7 @@
 
     .character-header {
         padding: 1.5rem;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.2) 0%, rgba(218, 165, 32, 0.2) 100%);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -210,7 +210,7 @@
     .activity-icon {
         width: 40px;
         height: 40px;
-        background: rgba(102, 126, 234, 0.2);
+        background: rgba(255, 215, 0, 0.2);
         border-radius: 8px;
         display: flex;
         align-items: center;
@@ -239,7 +239,7 @@
 
     .activity-character {
         font-size: 0.75rem;
-        color: #667eea;
+        color: #FFD700;
         margin-top: 0.25rem;
     }
 
@@ -256,6 +256,90 @@
         text-align: center;
         color: #888;
         margin-bottom: 2rem;
+    }
+
+    /* Gamification Styles */
+    .gamification-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .gamification-section {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .badges-card, .radar-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .badges-card h3, .radar-card h3 {
+        font-size: 1rem;
+        color: #b0b0b0;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badges-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .badge-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .badge-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .badge-icon {
+        font-size: 1.25rem;
+    }
+
+    .badge-info {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .badge-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .badge-desc {
+        font-size: 0.75rem;
+        color: #888;
+    }
+
+    .no-badges {
+        color: #666;
+        font-size: 0.875rem;
+        font-style: italic;
+    }
+
+    .radar-chart-container {
+        height: 280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 </style>
 {% endblock %}
@@ -290,6 +374,35 @@
     <div class="stat-card">
         <h3>Characters</h3>
         <div class="stat-value">{{ characters|length }}</div>
+    </div>
+</div>
+
+<!-- Gamification Section -->
+<div class="gamification-section">
+    <!-- Badges -->
+    <div class="badges-card">
+        <h3>Badges</h3>
+        <div class="badges-grid">
+            {% for badge in badges %}
+            <div class="badge-item" style="border-color: {{ badge.color }}40;">
+                <span class="badge-icon">{{ badge.icon }}</span>
+                <div class="badge-info">
+                    <span class="badge-name" style="color: {{ badge.color }};">{{ badge.name }}</span>
+                    <span class="badge-desc">{{ badge.description }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p class="no-badges">No badges earned yet. Keep playing!</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Radar Chart -->
+    <div class="radar-card">
+        <h3>Guardian Profile</h3>
+        <div class="radar-chart-container">
+            <canvas id="radarChart"></canvas>
+        </div>
     </div>
 </div>
 
@@ -371,4 +484,78 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const radarData = {{ radar_data_json|safe }};
+
+    if (radarData && radarData.labels && radarData.values) {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: radarData.labels,
+                datasets: [{
+                    label: 'Guardian Stats',
+                    data: radarData.values,
+                    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+                    borderColor: 'rgba(255, 215, 0, 0.8)',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#FFD700',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#FFD700',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            color: '#888',
+                            backdropColor: 'transparent',
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                        },
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)',
+                        },
+                        pointLabels: {
+                            color: '#b0b0b0',
+                            font: {
+                                size: 11,
+                            },
+                        },
+                    },
+                },
+                plugins: {
+                    legend: {
+                        display: false,
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#FFD700',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed.r.toFixed(1) + '%';
+                            }
+                        }
+                    },
+                },
+            },
+        });
+    }
+});
+</script>
 {% endblock %}

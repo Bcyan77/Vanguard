@@ -1,6 +1,9 @@
 # Vanguard - Quick Start Guide
 
-## Prerequisites Checklist
+## Production URL
+**Live Site**: https://vanguard-lfg.com
+
+## Prerequisites Checklist (Local Development)
 - [ ] Docker Desktop installed and running
 - [ ] ngrok installed
 - [ ] Bungie.net developer account created
@@ -115,7 +118,7 @@ docker-compose run --rm web python manage.py migrate
 ## File Structure
 
 ```
-bungie-party-recruitment/
+Vanguard/
 ├── accounts/          # Auth & user management
 ├── fireteams/         # Fireteam recruitment
 ├── players/           # Player search & statistics
@@ -135,6 +138,41 @@ After starting the server:
 - **API Docs**: `https://your-ngrok-url.ngrok.io/api/docs/`
 - **Admin Panel**: `https://your-ngrok-url.ngrok.io/admin/`
 - **Statistics**: `https://your-ngrok-url.ngrok.io/players/statistics/`
+
+## GCP Production Deployment
+
+### Server Info
+- **URL**: https://vanguard-lfg.com
+- **IP**: 34.64.113.204
+- **Project**: vanguard-482410
+- **Instance**: vanguard (asia-northeast3-a)
+- **SSH Host**: `vanguard-gcp`
+
+### Deploy Updates
+```bash
+# SSH into server
+ssh vanguard-gcp
+
+# Pull latest code and restart
+cd ~/Vanguard
+git pull origin main
+sg docker -c 'docker-compose up -d --build'
+```
+
+### One-liner Deploy
+```bash
+ssh vanguard-gcp "cd ~/Vanguard && git pull origin main && sg docker -c 'docker-compose up -d --build'"
+```
+
+### View Logs
+```bash
+ssh vanguard-gcp "cd ~/Vanguard && sg docker -c 'docker-compose logs -f'"
+```
+
+### SSL Certificate
+- Provider: Let's Encrypt
+- Auto-renewal: Enabled (certbot)
+- Expiry: 2026-03-26
 
 ## Resources
 

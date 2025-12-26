@@ -14,7 +14,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            background: linear-gradient(135deg, #0a0a0a 0%, #121212 50%, #1a1a1a 100%);
             color: #e0e0e0;
             min-height: 100vh;
             line-height: 1.6;
@@ -48,7 +48,7 @@
             font-weight: bold;
             color: #fff;
             text-decoration: none;
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -68,35 +68,54 @@
         }
 
         nav a:hover {
-            color: #667eea;
+            color: #FFD700;
         }
 
         /* Buttons */
         .btn {
             display: inline-block;
             padding: 0.75rem 1.5rem;
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: transparent;
+            color: #FFD700;
             text-decoration: none;
             border-radius: 8px;
-            border: none;
+            border: 1px solid #FFD700;
             cursor: pointer;
             font-size: 1rem;
-            transition: transform 0.2s, box-shadow 0.2s;
+            font-weight: 500;
+            transition: all 0.3s ease;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+            background: rgba(255, 215, 0, 0.15);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2), 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #b0b0b0;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
         }
 
         .btn-danger {
-            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            background: transparent;
+            border: 1px solid #f44336;
+            color: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: rgba(244, 67, 54, 0.15);
+            box-shadow: 0 0 20px rgba(244, 67, 54, 0.3);
         }
 
         /* Messages */
@@ -154,7 +173,8 @@
 
         .card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.15);
+            border-color: rgba(255, 215, 0, 0.3);
         }
 
         /* Form styles */
@@ -184,32 +204,32 @@
         textarea:focus,
         select:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: #FFD700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.1), 0 0 15px rgba(255, 215, 0, 0.15);
         }
 
         /* Select option styling - Chrome/Edge optimized */
         select option {
-            background-color: #1a1a2e;
+            background-color: #0d0d0d;
             color: #e0e0e0;
             padding: 0.5rem;
         }
 
         select option:hover {
-            background-color: rgba(102, 126, 234, 0.4);
+            background-color: rgba(255, 215, 0, 0.4);
             color: #ffffff;
         }
 
         select option:checked {
-            background-color: #667eea !important;
-            background: #667eea !important;
-            color: #ffffff !important;
+            background-color: #DAA520 !important;
+            background: #DAA520 !important;
+            color: #0a0a0a !important;
             font-weight: bold;
         }
 
         select option[selected] {
-            background-color: #667eea;
-            color: #ffffff;
+            background-color: #DAA520;
+            color: #0a0a0a;
         }
 
         /* Disabled state styling */
@@ -251,9 +271,9 @@
         }
 
         .modal-content {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 100%);
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.2);
             max-width: 800px;
             width: 90%;
             max-height: 90vh;
@@ -277,7 +297,7 @@
 
         .modal-header h2 {
             font-size: 1.5rem;
-            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(45deg, #FFD700 0%, #DAA520 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -313,6 +333,7 @@
                 <li><a href="{% url 'fireteams:fireteam_list' %}">Fireteams</a></li>
                 <li><a href="{% url 'players:search' %}">Player Search</a></li>
                 <li><a href="{% url 'players:statistics' %}">Statistics</a></li>
+                <li><a href="{% url 'players:leaderboard' %}">Leaderboard</a></li>
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'accounts:profile' %}">{{ user.display_name }}</a></li>
                 <li><a href="{% url 'accounts:logout' %}" class="btn btn-secondary">Logout</a></li>
