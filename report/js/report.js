@@ -309,6 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
@@ -378,6 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
             margin: { l: 50, r: 20, t: 40, b: 40 },
             yaxis: { title: 'Light Level', gridcolor: 'rgba(255,255,255,0.05)' },
             showlegend: false,
+            transition: { duration: 0 },
         }, { responsive: true, displayModeBar: false });
     }
 
@@ -409,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
             yaxis: { title: 'Triumph Score', gridcolor: 'rgba(255,255,255,0.05)' },
             showlegend: true,
             legend: { x: 0, y: 1, bgcolor: 'rgba(0,0,0,0)' },
+            transition: { duration: 0 },
         }, { responsive: true, displayModeBar: false });
     }
 
@@ -436,11 +439,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Light Level Histogram Demo
     const lightChartCtx = document.getElementById('demoLightChart');
     if (lightChartCtx) {
-        fetch('/api/statistics/descriptive/')
-            .then(res => res.json())
-            .then(data => {
-                const dist = data.light_level.distribution;
-                renderLightChart(lightChartCtx, Object.keys(dist), Object.values(dist), data.light_level);
+        Promise.all([
+            fetch('/api/statistics/distribution/').then(res => res.json()),
+            fetch('/api/statistics/descriptive/').then(res => res.json())
+        ])
+            .then(([distData, statsData]) => {
+                const dist = distData.light_level_distribution;
+                const stats = {
+                    avg: statsData.light_level.mean,
+                    median: statsData.light_level.median,
+                    q1: statsData.light_level.q1,
+                    q3: statsData.light_level.q3
+                };
+                renderLightChart(lightChartCtx, Object.keys(dist), Object.values(dist), stats);
             })
             .catch(() => {
                 // API 실패 시 폴백 데이터 사용
@@ -455,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/statistics/class-comparison/')
             .then(res => res.json())
             .then(data => {
-                const bp = data.boxplot_data;
+                const bp = data.visualization_data.data;
                 renderBoxPlot(boxPlotDiv, bp.titan, bp.hunter, bp.warlock);
             })
             .catch(() => {
@@ -501,6 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }]
             },
             options: {
+                animation: false,
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
